@@ -5,14 +5,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { LogIn, ArrowLeft } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().min(1, 'Password cannot be empty'), // Changed from min(6) for easier testing if needed
 });
 
 const Login = () => {
@@ -26,10 +25,42 @@ const Login = () => {
     }
   });
 
-  const onSubmit = (data) => {
-    // Mock login logic - route to a generic dashboard
-    // The backend would handle role-based redirection
-    navigate('/participant');
+  const onSubmit = async (data) => {
+    try {
+      // --- THIS URL IS NOW CORRECTED ---
+      const response = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_email: data.email, user_password: data.password }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Clear old session data and save new data to localStorage
+        localStorage.clear();
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('userId', result.user._id); // CRITICAL: Save the user's ID
+        localStorage.setItem('userName', result.user.user_name); // HELPFUL: Save the user's name for personalization
+
+        const roleRoutes = {
+          '68d1f869ce0af1a5778f50bd': '/admin-dashboard',
+          '68d1f878ce0af1a5778f50bf': '/coordinator',
+          '68d1f884ce0af1a5778f50c1': '/participant',
+          '68d1f88fce0af1a5778f50c3': '/evaluator-dashboard',
+        };
+
+        const userRoleId = result.user.role_id;
+        const redirectPath = roleRoutes[userRoleId] || '/';
+
+        navigate(redirectPath);
+      } else {
+        alert(result.message || 'Login failed. Please check your credentials.');
+      }
+    } catch (error) {
+      console.error('An unexpected error occurred:', error);
+      alert('An unexpected error occurred. Please try again.');
+    }
   };
 
   const containerVariants = {
@@ -37,10 +68,7 @@ const Login = () => {
     visible: {
       opacity: 1,
       y: 0,
-      transition: {
-        duration: 0.6,
-        ease: "easeOut"
-      }
+      transition: { duration: 0.6, ease: "easeOut" }
     }
   };
 
@@ -58,10 +86,7 @@ const Login = () => {
         animate="visible"
         className="w-full max-w-md relative z-10"
       >
-        <motion.div
-          whileHover={{ y: -2 }}
-          transition={{ duration: 0.2 }}
-        >
+        <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.2 }}>
           <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-xl">
             <CardHeader className="space-y-1 text-center pb-8">
               <motion.div 
@@ -169,3 +194,4 @@ const Login = () => {
 };
 
 export default Login;
+
