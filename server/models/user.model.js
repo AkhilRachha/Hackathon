@@ -11,7 +11,6 @@ const userSchema = new mongoose.Schema({
         // Default role is participant
         default: '68d1f884ce0af1a5778f50c1' 
     }
-    // user_github_url has been removed from this schema
 });
 
 const User = mongoose.model('User', userSchema);

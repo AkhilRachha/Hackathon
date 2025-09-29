@@ -6,9 +6,13 @@ import connectDB from './config/database.js';
 // --- Import all your route files here ---
 import userRoutes from './routes/user.routes.js';
 import teamRoutes from './routes/team.routes.js';
-import questionRoutes from './routes/question.routes.js';
-import collegeRoutes from './routes/college.routes.js'; // The missing import
+import questionRoutes from './routes/question.routes.js'; // The new import
+import collegeRoutes from './routes/college.routes.js';
 import authRoutes from './routes/auth.routes.js';
+import scoreRoutes from './routes/score.routes.js';
+import evaluationRoutes from './routes/evaluation.routes.js';
+import winnerRoutes from './routes/hackathonWinner.routes.js';
+import hackathonRoutes from './routes/hackathon.routes.js';
 
 // Load environment variables
 dotenv.config();
@@ -21,23 +25,21 @@ const PORT = process.env.PORT || 5000;
 connectDB();
 
 // --- Global Middleware ---
-// Enable Cross-Origin Resource Sharing (CORS) for all routes
 app.use(cors());
-// Parse incoming JSON requests
 app.use(express.json());
 
 // --- API Routes ---
-// This section tells the server which router to use for different URL paths.
-// All routes are prefixed with '/api' for consistency.
-
 app.use('/api', userRoutes);
 app.use('/api', teamRoutes);
-app.use('/api', questionRoutes);
-app.use('/api', collegeRoutes); // The missing line that fixes the 404 error
+app.use('/api', questionRoutes); // The new line that adds the question routes
+app.use('/api', collegeRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api', scoreRoutes);
+app.use('/api', evaluationRoutes);
+app.use('/api', winnerRoutes);
+app.use('/api', hackathonRoutes);
 
 // --- Start the Server ---
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-

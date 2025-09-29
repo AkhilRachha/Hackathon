@@ -2,8 +2,6 @@ import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'; // 1. IMPORT JWT
 
-// Make sure you have a .env file with a JWT_SECRET
-// e.g., JWT_SECRET=your-very-secret-key
 
 export const loginUser = async (req, res) => {
     try {

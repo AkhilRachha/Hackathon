@@ -1,89 +1,30 @@
-import axiosInstance from '@/lib/axiosInstance'
+import axios from 'axios';
 
-// Hackathon management API endpoints
-export const hackathonApi = {
-  // Create new hackathon (Admin only)
-  createHackathon: async (hackathonData) => {
-    try {
-      const response = await axiosInstance.post('/hackathon/create', {
-        title: hackathonData.title,
-        description: hackathonData.description,
-        startDate: hackathonData.startDate,
-        endDate: hackathonData.endDate,
-        registrationDeadline: hackathonData.registrationDeadline,
-        maxTeamSize: hackathonData.maxTeamSize,
-        rules: hackathonData.rules,
-        prizes: hackathonData.prizes
-      })
-      return response.data
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to create hackathon')
-    }
-  },
+const API_URL = 'http://localhost:5000/api';
 
-  // Get list of hackathons
-  getHackathons: async (filters = {}) => {
-    try {
-      const params = new URLSearchParams()
-      if (filters.status) params.append('status', filters.status)
-      if (filters.search) params.append('search', filters.search)
-      if (filters.page) params.append('page', filters.page)
-      if (filters.limit) params.append('limit', filters.limit)
+/**
+ * Creates a new hackathon event.
+ * @param {object} hackathonData - The data for the new hackathon.
+ * @returns {Promise<object>} The created hackathon data.
+ */
+export const createHackathon = (hackathonData) => {
+    return axios.post(`${API_URL}/hackathons`, hackathonData);
+};
 
-      const response = await axiosInstance.get(`/hackathon/list?${params}`)
-      return response.data
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch hackathons')
-    }
-  },
+/**
+ * Fetches all hackathons. Can be filtered by status.
+ * @param {string} [status] - Optional status to filter by (e.g., 'active', 'completed').
+ * @returns {Promise<Array>} A list of hackathons.
+ */
+export const getHackathons = (status) => {
+    const params = status ? { params: { status } } : {};
+    return axios.get(`${API_URL}/hackathons`, params);
+};
 
-  // Get hackathon details by ID
-  getHackathonDetails: async (hackathonId) => {
-    try {
-      const response = await axiosInstance.get(`/hackathon/${hackathonId}`)
-      return response.data
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch hackathon details')
-    }
-  },
-
-  // Update hackathon (Admin only)
-  updateHackathon: async (hackathonId, updateData) => {
-    try {
-      const response = await axiosInstance.put(`/hackathon/${hackathonId}`, updateData)
-      return response.data
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to update hackathon')
-    }
-  },
-
-  // Delete hackathon (Admin only)
-  deleteHackathon: async (hackathonId) => {
-    try {
-      const response = await axiosInstance.delete(`/hackathon/${hackathonId}`)
-      return response.data
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to delete hackathon')
-    }
-  },
-
-  // Register for hackathon
-  registerForHackathon: async (hackathonId) => {
-    try {
-      const response = await axiosInstance.post(`/hackathon/${hackathonId}/register`)
-      return response.data
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to register for hackathon')
-    }
-  },
-
-  // Get hackathon statistics (Admin/Coordinator)
-  getHackathonStats: async (hackathonId) => {
-    try {
-      const response = await axiosInstance.get(`/hackathon/${hackathonId}/stats`)
-      return response.data
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch hackathon statistics')
-    }
-  }
-}
+/**
+ * Fetches all completed hackathons with winner details.
+ * @returns {Promise<Array>} A list of completed hackathons with winners.
+ */
+export const getHackathonWinners = () => {
+    return axios.get(`${API_URL}/hackathons/winners`);
+};

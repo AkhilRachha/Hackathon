@@ -28,7 +28,7 @@ export const getStates = async (req, res) => {
 export const getCollegesByState = async (req, res) => {
     try {
         const { stateName } = req.params;
-        const colleges = await College.find({ state: stateName }).sort({ clg_name: 1 }); // Find colleges matching the state name and sort them
+        const colleges = await College.find({ state: stateName }).sort({ clg_name: 1 }); 
         res.status(200).json(colleges);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching colleges for the state', error });
