@@ -4,18 +4,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Users, ClipboardList, CheckCircle, Clock, AlertCircle, PlusCircle, Link as LinkIcon } from 'lucide-react';
+import { Users, ClipboardList, CheckCircle, Clock, AlertCircle, PlusCircle, Link as LinkIcon, LogOut } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
 
 /**
- * A streamlined dashboard component focused only on displaying data.
+ * A redesigned dashboard component to match the admin theme.
  * It receives all data and navigation functions as props.
  * @param {object} props
  * @param {Array} props.myTeams - List of teams managed by the current coordinator.
  * @param {Array} props.allTeams - List of all teams in the system.
  * @param {Function} props.onNavigateToRegister - Function to switch to the registration view.
  */
-const CoordinatorDashboard = ({ myTeams, allTeams, onNavigateToRegister }) => {
-    
+const CoordinatorDashboard = ({ myTeams = [], allTeams = [], onNavigateToRegister }) => {
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        localStorage.removeItem("authToken"); // clear token/session if stored
+        navigate("/login"); // redirect to login page
+    };
+
     const getStatusBadge = (status) => {
         const statusConfig = {
             'Active': { color: 'bg-green-100 text-green-800', icon: CheckCircle },
@@ -25,14 +32,14 @@ const CoordinatorDashboard = ({ myTeams, allTeams, onNavigateToRegister }) => {
         const config = statusConfig[status] || statusConfig['Pending'];
         const Icon = config.icon;
         return (
-            <Badge className={`${config.color} flex items-center gap-1`}>
+            <Badge className={`${config.color} flex items-center gap-1.5 py-1 px-2 text-xs`}>
                 <Icon className="w-3 h-3" />
                 {status}
             </Badge>
         );
     };
 
-    const TeamTable = ({ teamList }) => (
+    const TeamTable = ({ teamList = [] }) => (
         <Table>
             <TableHeader>
                 <TableRow>
@@ -71,67 +78,81 @@ const CoordinatorDashboard = ({ myTeams, allTeams, onNavigateToRegister }) => {
     );
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8"
-        >
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 to-emerald-600 bg-clip-text text-transparent">Coordinator Dashboard</h1>
-                    <p className="text-gray-600 mt-3 text-lg">Manage teams and assign projects</p>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8"
+            >
+                {/* Header */}
+                <div className="flex flex-wrap justify-between items-center gap-4">
+                    <div>
+                        <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 to-blue-600 bg-clip-text text-transparent">
+                            Coordinator Dashboard
+                        </h1>
+                        <p className="text-gray-600 mt-3 text-lg">Manage teams and assign projects</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                         <Button onClick={onNavigateToRegister} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-shadow">
+                            <PlusCircle className="mr-2 h-4 w-4"/> Register New Team
+                        </Button>
+                        <Button onClick={handleLogout} variant="outline" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700">
+                            <LogOut className="mr-2 h-4 w-4"/> Logout
+                        </Button>
+                    </div>
                 </div>
-                <Button onClick={onNavigateToRegister}><PlusCircle className="mr-2 h-4 w-4"/> Register New Team</Button>
-            </div>
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div><p className="text-sm font-medium text-gray-600">My Teams</p><p className="text-3xl font-bold text-blue-600">{myTeams.length}</p></div>
-                            <Users className="w-8 h-8 text-blue-500" />
-                        </div>
+
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                                <div><p className="text-sm font-medium text-gray-600">My Teams</p><p className="text-3xl font-bold text-blue-600">{myTeams.length}</p></div>
+                                <Users className="w-8 h-8 text-blue-500" />
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                                <div><p className="text-sm font-medium text-gray-600">Projects Assigned</p><p className="text-3xl font-bold text-emerald-600">{myTeams.filter(team => team.project).length}</p></div>
+                                <ClipboardList className="w-8 h-8 text-emerald-500" />
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                               <div> <p className="text-sm font-medium text-gray-600">Pending Assignments</p><p className="text-3xl font-bold text-amber-600">{myTeams.filter(team => !team.project).length}</p></div>
+                                <Clock className="w-8 h-8 text-amber-500" />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Team Management Table */}
+                <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
+                    <CardHeader>
+                        <CardTitle className="text-xl">Team Management</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Tabs defaultValue="my-teams" className="w-full">
+                            <TabsList className="grid w-full grid-cols-2 bg-slate-200/60">
+                                <TabsTrigger value="my-teams">My Teams</TabsTrigger>
+                                <TabsTrigger value="all-teams">All Teams</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="my-teams" className="mt-6">
+                                <div className="bg-white rounded-lg border border-gray-200/80 overflow-x-auto"><TeamTable teamList={myTeams} /></div>
+                            </TabsContent>
+                            <TabsContent value="all-teams" className="mt-6">
+                                <div className="bg-white rounded-lg border border-gray-200/80 overflow-x-auto"><TeamTable teamList={allTeams} /></div>
+                            </TabsContent>
+                        </Tabs>
                     </CardContent>
                 </Card>
-                <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div><p className="text-sm font-medium text-gray-600">Projects Assigned</p><p className="text-3xl font-bold text-emerald-600">{myTeams.filter(team => team.project).length}</p></div>
-                            <ClipboardList className="w-8 h-8 text-emerald-500" />
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                           <div> <p className="text-sm font-medium text-gray-600">Pending Assignments</p><p className="text-3xl font-bold text-amber-600">{myTeams.filter(team => !team.project).length}</p></div>
-                            <Clock className="w-8 h-8 text-amber-500" />
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-            {/* Team Management Table */}
-            <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
-                <CardHeader>
-                    <CardTitle className="text-xl">Team Management</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Tabs defaultValue="my-teams" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2 bg-gray-100/50">
-                            <TabsTrigger value="my-teams">My Teams</TabsTrigger>
-                            <TabsTrigger value="all-teams">All Teams</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="my-teams" className="mt-6">
-                            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden"><TeamTable teamList={myTeams} /></div>
-                        </TabsContent>
-                        <TabsContent value="all-teams" className="mt-6">
-                            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden"><TeamTable teamList={allTeams} /></div>
-                        </TabsContent>
-                    </Tabs>
-                </CardContent>
-            </Card>
-        </motion.div>
+            </motion.div>
+        </div>
     );
 };
 
