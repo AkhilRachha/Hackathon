@@ -35,7 +35,7 @@ const CoordinatorPage = () => {
             const [teamsRes, questionsRes, participantsRes] = await Promise.all([
                 axios.get('http://localhost:5000/api/teams'),
                 axios.get('http://localhost:5000/api/questions'),
-                axios.get('http://localhost:5000/api/participants/available')
+                axios.get('http://localhost:5000/api/users/participants/available')
             ]);
 
             // Format team data to be easily used by the dashboard

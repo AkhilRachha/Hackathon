@@ -1,11 +1,15 @@
-import axios from 'axios';
+import axiosInstance from '@/lib/axiosInstance';
 
-const API_URL = 'http://localhost:5000/api';
-
-/**
- * Fetches all available roles from the database.
- * @returns {Promise<Array>} A list of roles.
- */
-export const getRoles = () => {
-    return axios.get(`${API_URL}/roles`);
-};
+export const roleApi = {
+    /**
+     * Fetches all available roles from the database.
+     */
+    getRoles: async () => {
+        try {
+            const response = await axiosInstance.get('/roles');
+            return response.data;
+        } catch (error) {
+            throw new Error(error.response?.data?.message || 'Failed to fetch roles');
+        }
+    }
+}

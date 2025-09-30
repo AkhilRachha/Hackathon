@@ -4,7 +4,7 @@ import Evaluation from '../models/evaluation.model.js';
 export const getEvaluations = async (req, res) => {
   try {
     const evaluations = await Evaluation.find()
-      .populate('score_id')
+      .populate('scores') // CORRECTED: Populating the 'scores' array field
       .populate('t_id')
       .populate('h_id')
       .populate('q_id');
@@ -18,7 +18,7 @@ export const getEvaluations = async (req, res) => {
 export const getEvaluationById = async (req, res) => {
   try {
     const evaluation = await Evaluation.findById(req.params.id)
-      .populate('score_id')
+      .populate('scores') // CORRECTED: Populating the 'scores' array field
       .populate('t_id')
       .populate('h_id')
       .populate('q_id');

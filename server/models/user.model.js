@@ -6,10 +6,10 @@ const userSchema = new mongoose.Schema({
     user_password: { type: String, required: true },
     user_phoneno: { type: String, required: true },
     clg_id: { type: mongoose.Schema.Types.ObjectId, ref: 'College' },
-    role_id: { 
+    role_name: { 
         type: String, 
-        // Default role is participant
-        default: '68d1f884ce0af1a5778f50c1' 
+        // This default is overridden if you provide a value like 'admin'
+        default: 'participant' 
     }
 });
 

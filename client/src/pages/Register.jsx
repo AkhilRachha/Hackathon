@@ -30,8 +30,9 @@ import {
 import { UserPlus, ArrowLeft } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from '@/hooks/use-toast'; 
 
-// Zod schema for validation
+// Zod schema for validation (Assuming 'other_clg_state' validation relies on 'state' being set)
 const registerSchema = z
   .object({
     user_name: z.string().min(1, 'Name is required'),
@@ -71,11 +72,17 @@ const Register = () => {
   const [isLoadingColleges, setIsLoadingColleges] = useState(false);
   const [showOtherCollege, setShowOtherCollege] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // FIX 1: Use role name string directly and remove complex role fetching
+  const participantRoleName = 'participant'; 
+  const [isRoleLoading, setIsRoleLoading] = useState(false); 
 
+  // useEffect to fetch states
   useEffect(() => {
     const fetchStates = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/states');
+        // FIX 2: Correct API path for states
+        const response = await axios.get('http://localhost:5000/api/colleges/states');
         setStates(response.data);
       } catch (error) {
         console.error('Error fetching states', error);
@@ -84,6 +91,9 @@ const Register = () => {
     fetchStates();
   }, []);
 
+  // Removed useEffect to fetch roles (Fix 1 complete)
+
+  // useEffect to fetch colleges by state
   useEffect(() => {
     if (!selectedState) {
       setColleges([]);
@@ -92,7 +102,8 @@ const Register = () => {
     const fetchCollegesByState = async () => {
       setIsLoadingColleges(true);
       try {
-        const response = await axios.get(`http://localhost:5000/api/colleges/${selectedState}`);
+        // FIX 3: Correct API path for colleges by state (based on college.routes.js)
+        const response = await axios.get(`http://localhost:5000/api/colleges/colleges/${selectedState}`);
         setColleges(response.data);
       } catch (error) {
         console.error('Error fetching colleges for state', error);
@@ -121,6 +132,11 @@ const Register = () => {
   const onSubmit = async (data) => {
     let finalCollegeId = data.clg_id;
 
+    if (isRoleLoading) { // This check remains, though isRoleLoading is now always false
+        toast({ title: "Error", description: "Registration halted: System initializing." });
+        return;
+    }
+
     // Step 1: If user selected "Other", create the new college first
     if (data.clg_id === 'other') {
       try {
@@ -132,12 +148,12 @@ const Register = () => {
         finalCollegeId = collegeResponse.data._id;
       } catch (error) {
         console.error('Error adding new college:', error);
-        alert('Failed to add the new college. Please try again.');
+        toast({ title: "Error", description: 'Failed to add the new college. Please try again.' });
         return;
       }
     }
 
-    // Step 2: Register the new user with the correct college ID
+    // Step 2: Register the new user with the correct college ID and ROLE NAME
     try {
       const userPayload = {
         user_name: data.user_name,
@@ -145,18 +161,20 @@ const Register = () => {
         user_password: data.user_password,
         user_phoneno: data.user_phoneno,
         clg_id: finalCollegeId,
+        // FIX 4: Send 'role_name' (string) instead of 'role_id' (object ID)
+        role_name: participantRoleName, 
       };
 
-      // --- THIS IS THE CORRECTED URL ---
+      // The registration endpoint is /api/register (mounted in authRoutes)
       await axios.post('http://localhost:5000/api/register', userPayload);
       
-      alert('Registration successful! Please log in.');
+      toast({ title: "Success", description: 'Registration successful! Please log in.' });
       navigate('/login');
 
     } catch (error) {
       console.error('Error registering user:', error);
       const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
-      alert(errorMessage);
+      toast({ title: "Error", description: errorMessage });
     }
   };
   
@@ -177,6 +195,8 @@ const Register = () => {
   };
   
   const inputStyle = "h-11 bg-white/70 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200";
+
+  // Removed the isRoleLoading return block (Fix 1 complete)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4 relative overflow-hidden">
@@ -268,11 +288,11 @@ const Register = () => {
                     )}
                   />
                   {showOtherCollege && (
-                     <>
+                      <>
                         <FormField control={form.control} name="other_clg_name" render={({ field }) => ( <FormItem><FormLabel className="text-sm font-semibold text-gray-700">College Name</FormLabel><FormControl><Input placeholder="Enter college name" className={inputStyle} {...field} /></FormControl><FormMessage /></FormItem> )} />
                         <FormField control={form.control} name="other_clg_district" render={({ field }) => ( <FormItem><FormLabel className="text-sm font-semibold text-gray-700">District</FormLabel><FormControl><Input placeholder="Enter district" className={inputStyle} {...field} /></FormControl><FormMessage /></FormItem> )} />
                         <FormField control={form.control} name="other_clg_state" render={({ field }) => ( <FormItem><FormLabel className="text-sm font-semibold text-gray-700">State</FormLabel><FormControl><Input placeholder="Enter state" className={inputStyle} {...field} /></FormControl><FormMessage /></FormItem> )} />
-                     </>
+                      </>
                   )}
                   <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
                     <Button type="submit" className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/25 transition-all duration-200 mt-2" size="lg">
@@ -306,4 +326,3 @@ const Register = () => {
 };
 
 export default Register;
-

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import DefaultLayout from '../../components/DefaultLayout';
+import DefaultLayout from '@/components/DefaultLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, Edit, Trash2, UserPlus, FileText } from 'lucide-react';
@@ -17,12 +17,12 @@ const ViewHackathon = () => {
         const fetchHackathonData = async () => {
             try {
                 // Fetch all hackathons and display the first one for this example.
-                // In a real app, you'd likely pass an ID in the URL.
                 const response = await axios.get('http://localhost:5000/api/hackathons');
                 if (response.data && response.data.length > 0) {
                     // For now, let's just pick the first hackathon from the list
                     const currentHackathon = response.data[0];
-                    // Let's create some dummy stats as the backend doesn't provide them yet
+                    
+                    // The calculation logic below is retained for data robustness
                     currentHackathon.stats = {
                         participants: currentHackathon.teams.reduce((acc, team) => acc + (team.members ? team.members.length : 0), 0),
                         teams: currentHackathon.teams.length,
@@ -129,4 +129,3 @@ const ViewHackathon = () => {
 };
 
 export default ViewHackathon;
-

@@ -1,19 +1,39 @@
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { motion } from 'framer-motion';
 import DefaultLayout from '@/components/DefaultLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy } from 'lucide-react';
+import { toast } from '@/hooks/use-toast'; // Assuming toast is available via the hook
 
 const HackathonWinners = () => {
-    // Mock data - replace with API call
-    const pastHackathons = [
-        {
-            id: 'hackathon-2024',
-            name: 'CodeFest 2024',
-            winner: 'The Bug Busters',
-            firstRunnerUp: 'Syntax Saviors',
-            secondRunnerUp: 'Kernel Krew'
-        }
-    ];
+    // Replaced Mock data with state and added loading
+    const [pastHackathons, setPastHackathons] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchWinners = async () => {
+            try {
+                // Fetch past winners from the backend
+                const response = await axios.get('http://localhost:5000/api/hackathon-winners');
+                setPastHackathons(response.data);
+            } catch (error) {
+                console.error("Error fetching hackathon winners:", error);
+                toast({ title: "Error", description: "Failed to fetch hackathon winners." });
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchWinners();
+    }, []);
+
+    if (loading) {
+        return (
+            <DefaultLayout userRole="admin">
+                <div className="flex justify-center items-center min-h-screen">Loading Winners Data...</div>
+            </DefaultLayout>
+        );
+    }
 
     return (
         <DefaultLayout userRole="admin">

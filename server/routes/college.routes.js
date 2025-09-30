@@ -1,19 +1,28 @@
 // ../routes/college.routes.js
 
 import express from 'express';
-// Import the new controller functions
-import { getStates, getCollegesByState, addCollege } from '../controllers/college.controller.js';
+// Import all necessary controller functions
+import { 
+    getColleges, 
+    getStates, 
+    getCollegesByState, 
+    addCollege 
+} from '../controllers/college.controller.js';
 
 const router = express.Router();
 
-// NEW Route to get all unique states
-router.get('/states', getStates);
+// 1. Route to get ALL colleges (accessible at /api/colleges)
+router.get('/', getColleges); 
 
-// NEW Route to get colleges by state name
-// The ':stateName' is a URL parameter
-router.get('/colleges/:stateName', getCollegesByState);
+// 2. FIX/CLARIFICATION: Route to get all unique states
+// This combines with the app.js mount to be /api/colleges/states
+router.get('/states', getStates); 
 
-// Route for adding a new college remains the same
+// 3. Route to get colleges by state name
+// This combines with the app.js mount to be /api/colleges/colleges/:stateName
+router.get('/colleges/:stateName', getCollegesByState); 
+
+// 4. Route for adding a new college
 router.post('/colleges', addCollege);
 
 export default router;

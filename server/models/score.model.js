@@ -1,15 +1,19 @@
 import mongoose from 'mongoose';
 
 const scoreSchema = new mongoose.Schema({
-  problem_understanding: { type: Number, required: true },
-  design_approach: { type: Number, required: true },
-  implementation_clarity: { type: Number, required: true },
-  code_organizing: { type: Number, required: true },
-  code_readability: { type: Number, required: true },
-  completion: { type: Number, required: true },
-  presentation: { type: Number, required: true },
-  usability: { type: Number, required: true },
-  total_score: { type: Number, required: true }
+  // Dynamic array to store scores against the criteria
+  criterionScores: [{
+    criterionName: { type: String, required: true },
+    score: { type: Number, required: true },
+  }],
+  
+  evaluator_id: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'User', 
+      required: true // The user (Evaluator) who submitted this score
+  },
+  
+  total_score: { type: Number, required: true },
 }, { timestamps: true });
 
 const Score = mongoose.model('Score', scoreSchema);

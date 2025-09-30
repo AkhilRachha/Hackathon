@@ -1,21 +1,27 @@
-import axios from 'axios';
+import axiosInstance from '@/lib/axiosInstance';
 
-const API_URL = 'http://localhost:5000/api';
+export const adminApi = {
+    /**
+     * Fetches all users from the database.
+     */
+    getAllUsers: async () => {
+        try {
+            const response = await axiosInstance.get('/users');
+            return response.data;
+        } catch (error) {
+            throw new Error(error.response?.data?.message || 'Failed to fetch all users');
+        }
+    },
 
-/**
- * Fetches all users from the database.
- * @returns {Promise<Array>} A list of all users.
- */
-export const getAllUsers = () => {
-    return axios.get(`${API_URL}/users`);
-};
-
-/**
- * Updates the role of a specific user.
- * @param {string} userId - The ID of the user to update.
- * @param {string} roleId - The new role ID to assign.
- * @returns {Promise<object>} The updated user data.
- */
-export const updateUserRole = (userId, roleId) => {
-    return axios.put(`${API_URL}/users/${userId}/role`, { role_id: roleId });
-};
+    /**
+     * Updates the role of a specific user.
+     */
+    updateUserRole: async (userId, roleId) => {
+        try {
+            const response = await axiosInstance.put(`/users/${userId}/role`, { role_id: roleId });
+            return response.data;
+        } catch (error) {
+            throw new Error(error.response?.data?.message || 'Failed to update user role');
+        }
+    }
+}

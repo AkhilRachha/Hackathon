@@ -8,7 +8,8 @@ const evaluationSchema = new mongoose.Schema({
   mid_sub_comments: { type: String },
   final_sub_time: { type: Date },
   final_sub_comments: { type: String },
-  score_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Score' } 
+  // CORRECTED: Changed to an array to hold scores from multiple evaluators
+  scores: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Score' }] 
 }, { timestamps: true });
 
 const Evaluation = mongoose.model('Evaluation', evaluationSchema);

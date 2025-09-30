@@ -12,7 +12,7 @@ import CreateHackathon from './pages/admin/CreateHackathon';
 import ViewHackathon from './pages/admin/ViewHackathon';
 import HackathonWinners from './pages/admin/HackathonWinners';
 import Titles from './pages/admin/Titles';
-import RoleMapping from './pages/admin/RoleMapping'; // Import the new component
+import RoleMapping from './pages/admin/RoleMapping'; 
 import ParticipantDashboard from './pages/participant/ParticipantDashboard';
 import EvaluatorDashboard from './pages/evaluator/EvaluatorDashboard';
 import CoordinatorPage from './pages/coordinator/CoordinatorPage';
@@ -23,14 +23,14 @@ function App() {
       <div className="min-h-screen bg-background text-foreground">
         <Routes>
           {/* ==================================================================== */}
-          {/* PUBLIC ROUTES                                                      */}
+          {/* PUBLIC ROUTES                                                        */}
           {/* ==================================================================== */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
           {/* ==================================================================== */}
-          {/* PROTECTED ROUTES                                                   */}
+          {/* PROTECTED ROUTES                                                     */}
           {/* ==================================================================== */}
           
           {/* --- Admin Routes --- */}
@@ -39,7 +39,7 @@ function App() {
           <Route path="/admin/view-hackathon" element={<ViewHackathon />} />
           <Route path="/admin/hackathon-winners" element={<HackathonWinners />} />
           <Route path="/admin/titles" element={<Titles />} />
-          <Route path="/admin/role-mapping" element={<RoleMapping />} /> {/* Add the new route */}
+          <Route path="/admin/role-mapping" element={<RoleMapping />} /> {/* Route for User Role Management */}
 
           {/* --- Coordinator Route --- */}
           <Route path="/coordinator" element={<CoordinatorPage />} />
@@ -58,4 +58,3 @@ function App() {
 }
 
 export default App;
-

@@ -8,10 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { LogIn, ArrowLeft } from 'lucide-react';
+import { toast } from '@/hooks/use-toast'; 
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(1, 'Password cannot be empty'), // Changed from min(6) for easier testing if needed
+  password: z.string().min(1, 'Password cannot be empty'), 
 });
 
 const Login = () => {
@@ -27,7 +28,6 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     try {
-      // --- THIS URL IS NOW CORRECTED ---
       const response = await fetch('http://localhost:5000/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -37,29 +37,36 @@ const Login = () => {
       const result = await response.json();
 
       if (response.ok) {
-        // Clear old session data and save new data to localStorage
         localStorage.clear();
+        
         localStorage.setItem('token', result.token);
-        localStorage.setItem('userId', result.user._id); // CRITICAL: Save the user's ID
-        localStorage.setItem('userName', result.user.user_name); // HELPFUL: Save the user's name for personalization
+        localStorage.setItem('userId', result.user._id); 
+        localStorage.setItem('userName', result.user.user_name); 
+        
+        // FIX 1: Save the consistent role_name string from the backend response
+        localStorage.setItem('userRole', result.user.role_name);
 
+        // FIX 2: Map role names (strings) to dashboard paths for redirection
         const roleRoutes = {
-          '68d1f869ce0af1a5778f50bd': '/admin-dashboard',
-          '68d1f878ce0af1a5778f50bf': '/coordinator',
-          '68d1f884ce0af1a5778f50c1': '/participant',
-          '68d1f88fce0af1a5778f50c3': '/evaluator-dashboard',
+          'admin': '/admin',
+          'coordinator': '/coordinator',
+          'participant': '/participant',
+          'evaluator': '/evaluator-dashboard',
         };
 
-        const userRoleId = result.user.role_id;
-        const redirectPath = roleRoutes[userRoleId] || '/';
+        // FIX 3: Read the correct property (role_name) for mapping
+        const userRoleName = result.user.role_name; 
+        
+        const redirectPath = roleRoutes[userRoleName] || '/';
 
-        navigate(redirectPath);
+        toast({ title: "Success", description: "Login successful!" });
+        navigate(redirectPath, { replace: true });
       } else {
-        alert(result.message || 'Login failed. Please check your credentials.');
+        toast({ title: "Login Failed", description: result.message || 'Please check your credentials.' });
       }
     } catch (error) {
       console.error('An unexpected error occurred:', error);
-      alert('An unexpected error occurred. Please try again.');
+      toast({ title: "Error", description: 'A network error occurred. Please try again later.' });
     }
   };
 
@@ -194,4 +201,3 @@ const Login = () => {
 };
 
 export default Login;
-
