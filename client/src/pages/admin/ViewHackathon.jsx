@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+// ➡️ FIX: Import the configured axios instance
+import axios from '@/lib/axiosInstance'; 
 import { motion } from 'framer-motion';
 import DefaultLayout from '@/components/DefaultLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,16 +18,17 @@ const ViewHackathon = () => {
         const fetchHackathonData = async () => {
             try {
                 // Fetch all hackathons and display the first one for this example.
-                const response = await axios.get('http://localhost:5000/api/hackathons');
+                const response = await axios.get('/hackathons'); // Use relative path
+                
                 if (response.data && response.data.length > 0) {
-                    // For now, let's just pick the first hackathon from the list
                     const currentHackathon = response.data[0];
                     
-                    // The calculation logic below is retained for data robustness
+                    // The calculation logic below is now accurate because 'members' is populated
                     currentHackathon.stats = {
+                        // ➡️ This calculation is now correct and uses the populated members array
                         participants: currentHackathon.teams.reduce((acc, team) => acc + (team.members ? team.members.length : 0), 0),
                         teams: currentHackathon.teams.length,
-                        activeEvents: 1 // Assuming this view is for one active event
+                        activeEvents: 1 
                     };
                     setHackathon(currentHackathon);
                 } else {
@@ -34,7 +36,7 @@ const ViewHackathon = () => {
                 }
             } catch (error) {
                 console.error("Error fetching hackathon data:", error);
-                toast({ title: "Error", description: "Could not fetch hackathon data." });
+                toast({ title: "Error", description: "Could not fetch hackathon data. (Check server and login status)" });
             } finally {
                 setLoading(false);
             }
@@ -81,6 +83,7 @@ const ViewHackathon = () => {
                     <h1 className="text-4xl font-bold mb-8">{hackathon.title}</h1>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        {/* Participants count now displays the accurate populated number */}
                         <Card><CardHeader><CardTitle>Total Participants</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{hackathon.stats.participants}</p></CardContent></Card>
                         <Card><CardHeader><CardTitle>Total Teams</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{hackathon.stats.teams}</p></CardContent></Card>
                         <Card><CardHeader><CardTitle>Active Events</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{hackathon.stats.activeEvents}</p></CardContent></Card>
@@ -88,15 +91,33 @@ const ViewHackathon = () => {
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <Card>
-                            <CardHeader><CardTitle>Teams</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Teams & Details</CardTitle></CardHeader>
                             <CardContent>
                                 {hackathon.teams.length > 0 ? hackathon.teams.map(team => (
-                                    <div key={team._id} className="flex justify-between items-center mb-4 p-2 rounded-lg hover:bg-gray-100">
-                                        <p className="font-semibold">{team.team_name}</p>
-                                        <div>
-                                            <Button variant="ghost" size="sm"><Edit className="h-4 w-4" /></Button>
-                                            <Button variant="ghost" size="sm" className="text-red-500"><Trash2 className="h-4 w-4" /></Button>
+                                    // ➡️ MODIFIED: Display all team details
+                                    <div key={team._id} className="mb-4 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                        <div className="flex justify-between items-start">
+                                            <div className='flex-grow'>
+                                                <p className="font-bold text-lg text-blue-700">{team.team_name} (Max: {team.max_members})</p>
+                                                <p className="text-sm text-gray-600">Status: <span className='font-medium'>{team.status}</span></p>
+                                            </div>
+                                            <div>
+                                                <Button variant="ghost" size="sm" title="Edit Team"><Edit className="h-4 w-4" /></Button>
+                                                <Button variant="ghost" size="sm" className="text-red-500" title="Delete Team"><Trash2 className="h-4 w-4" /></Button>
+                                            </div>
                                         </div>
+                                        
+                                        <div className="mt-3 text-sm border-t border-dashed pt-2">
+                                            <p className="font-medium text-gray-800">Members ({team.members.length}):</p>
+                                            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs mt-1">
+                                                {team.members.length > 0 ? team.members.map(member => (
+                                                    <span key={member._id} className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200" title={member.email}>
+                                                        {member.name}
+                                                    </span>
+                                                )) : <span className="text-red-500 italic">No participants registered for this team yet.</span>}
+                                            </div>
+                                        </div>
+                                        {/* Optional: Add Project ID and Coordinator here if needed */}
                                     </div>
                                 )) : <p className="text-gray-500">No teams have been created for this hackathon yet.</p>}
                             </CardContent>
@@ -105,7 +126,6 @@ const ViewHackathon = () => {
                         <Card>
                             <CardHeader><CardTitle>Project Titles</CardTitle></CardHeader>
                             <CardContent>
-                                {/* This will need to be populated from the questions collection */}
                                 <div className="p-2 rounded-lg hover:bg-gray-100 cursor-pointer" onClick={() => navigate('/admin/titles')}>
                                     <p className="flex items-center"><FileText className="h-4 w-4 mr-2"/> Manage Titles and Criteria</p>
                                 </div>

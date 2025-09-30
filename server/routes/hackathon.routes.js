@@ -5,6 +5,8 @@ import {
     getHackathonWinners, 
     checkActiveOrUpcomingHackathon
 } from '../controllers/hackathon.controller.js';
+// ➡️ Import the data grouping function (for Titles.jsx)
+import { getDomainsAndQuestions } from '../controllers/question.controller.js'; 
 
 const router = express.Router();
 
@@ -16,17 +18,17 @@ const router = express.Router();
  */
 router.get('/active-or-upcoming', checkActiveOrUpcomingHackathon);
 
-/**
- * @route POST /api/hackathons/
- * @description Creates a new hackathon entry.
- */
-router.post('/', createHackathon);
+// ➡️ CRITICAL FIX: Combine GET (list all) and POST (create) requests for the root path.
+// This resolves the 404 ambiguity on the POST request.
+router.route('/')
+    .get(getHackathons) // Handles GET /api/hackathons (list all hackathons)
+    .post(createHackathon); // Handles POST /api/hackathons (create new hackathon)
 
 /**
- * @route GET /api/hackathons/
- * @description Retrieves a list of all hackathons.
+ * @route GET /api/hackathons/domains-and-questions
+ * @description Fix for Titles.jsx loading error.
  */
-router.get('/', getHackathons);
+router.get('/domains-and-questions', getDomainsAndQuestions); 
 
 /**
  * @route GET /api/hackathons/winners

@@ -79,10 +79,22 @@ export const createHackathon = async (req, res) => {
 // --- Get all Hackathons ---
 export const getHackathons = async (req, res) => {
     try {
-        const hackathons = await Hackathon.find().populate('teams');
+        const hackathons = await Hackathon.find().populate({
+            path: 'teams',
+            // Explicitly selecting fields from the Team model
+            select: 'team_name max_members status members', 
+            populate: {
+                path: 'members', 
+                // ➡️ CRITICAL: Explicitly specify the model name 'User'
+                model: 'User', 
+                select: 'name email' 
+            }
+        });
         res.status(200).json(hackathons);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching hackathons', error });
+        // Log the error to your console for debugging
+        console.error("Mongoose Population Error:", error.message); 
+        res.status(500).json({ message: 'Error fetching hackathons', error: error.message });
     }
 };
 

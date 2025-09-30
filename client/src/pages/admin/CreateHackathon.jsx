@@ -7,8 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { toast } from '@/hooks/use-toast'; // Ensure toast is imported
+import axios from '@/lib/axiosInstance'; // Correctly imported axiosInstance
+import { toast } from '@/hooks/use-toast'; 
 
 const CreateHackathon = () => {
     const [hackathonData, setHackathonData] = useState({
@@ -37,8 +37,9 @@ const CreateHackathon = () => {
 
         try {
             // 1. CHECK FOR ACTIVE/UPCOMING HACKATHONS
-            // This assumes you have a new backend route /api/hackathons/active-or-upcoming
-            const checkResponse = await axios.get('http://localhost:5000/api/hackathons/active-or-upcoming');
+            // ➡️ FIX: Use RELATIVE PATH '/hackathons/active-or-upcoming'
+            // axiosInstance handles 'http://localhost:5000/api'
+            const checkResponse = await axios.get('/hackathons/active-or-upcoming');
             
             if (checkResponse.data.exists) {
                 toast({ 
@@ -49,7 +50,8 @@ const CreateHackathon = () => {
             }
 
             // 2. CREATE NEW HACKATHON
-            const response = await axios.post('http://localhost:5000/api/hackathons', hackathonData);
+            // ➡️ FIX: Use RELATIVE PATH '/hackathons'
+            const response = await axios.post('/hackathons', hackathonData);
             setIsEventCreated(true);
             toast({ title: "Success", description: "Hackathon created successfully!" }); 
             
@@ -61,7 +63,7 @@ const CreateHackathon = () => {
             console.error("Error creating hackathon:", error);
             const errorMessage = error.response?.data?.message || error.message;
 
-            // If the error is from the check route but not the expected "not found"
+            // This condition uses the relative path now
             if (error.config.url.endsWith('/active-or-upcoming')) {
                  toast({ title: "Error Checking Events", description: `Could not verify current event status. ${errorMessage}` });
             } else {
