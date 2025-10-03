@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import axios from '@/lib/axiosInstance'; // Correctly imported axiosInstance
+import { createHackathon } from '@/api/hackathonApi'; 
 import { toast } from '@/hooks/use-toast'; 
 
 const CreateHackathon = () => {
@@ -36,22 +36,10 @@ const CreateHackathon = () => {
         }
 
         try {
-            // 1. CHECK FOR ACTIVE/UPCOMING HACKATHONS
-            // ➡️ FIX: Use RELATIVE PATH '/hackathons/active-or-upcoming'
-            // axiosInstance handles 'http://localhost:5000/api'
-            const checkResponse = await axios.get('/hackathons/active-or-upcoming');
+            // ➡️ CRITICAL FIX: The check for existing events is REMOVED to allow multiple events and prevent the timeout error.
             
-            if (checkResponse.data.exists) {
-                toast({ 
-                    title: "Creation Blocked", 
-                    description: "An active or upcoming hackathon already exists. You can only create one at a time." 
-                });
-                return; // Stop creation if an event already exists
-            }
-
             // 2. CREATE NEW HACKATHON
-            // ➡️ FIX: Use RELATIVE PATH '/hackathons'
-            const response = await axios.post('/hackathons', hackathonData);
+            const response = await createHackathon(hackathonData);
             setIsEventCreated(true);
             toast({ title: "Success", description: "Hackathon created successfully!" }); 
             
@@ -59,16 +47,11 @@ const CreateHackathon = () => {
             setTimeout(() => navigate('/admin/view-hackathon'), 2000); 
 
         } catch (error) {
-            // Handle errors from both the check and the creation API calls
+            // Handle creation errors
             console.error("Error creating hackathon:", error);
             const errorMessage = error.response?.data?.message || error.message;
 
-            // This condition uses the relative path now
-            if (error.config.url.endsWith('/active-or-upcoming')) {
-                 toast({ title: "Error Checking Events", description: `Could not verify current event status. ${errorMessage}` });
-            } else {
-                 toast({ title: "Error", description: `Failed to create hackathon. ${errorMessage}` });
-            }
+            toast({ title: "Error", description: `Failed to create hackathon. ${errorMessage}` });
         }
     };
 

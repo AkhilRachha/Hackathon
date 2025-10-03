@@ -2,84 +2,84 @@ import User from '../models/user.model.js';
 import Team from '../models/team.model.js';
 import bcrypt from 'bcryptjs';
 
+// --- Get All Users (for Role Mapping) ---
+export const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find()
+            .select('-user_password')
+            .populate('current_hackathon', 'title');
+        
+        res.status(200).json(users);
+    } catch (error) {
+        console.error('Error fetching all users:', error);
+        res.status(500).json({ message: 'Error fetching users', error: error.message });
+    }
+};
+
+// --- Get Available Participants ---
+export const getAvailableParticipants = async (req, res) => {
+    try {
+        const participants = await User.find({
+            role_name: 'participant',
+            current_hackathon: null
+        }).select('-user_password');
+        
+        res.status(200).json(participants);
+    } catch (error) {
+        console.error('Error fetching available participants:', error);
+        res.status(500).json({ message: 'Error fetching available participants', error: error.message });
+    }
+};
+
+// --- Register User (placeholder for existing implementation) ---
 export const registerUser = async (req, res) => {
     try {
-        const {
-            user_name,
-            user_email,
-            user_password,
-            user_phoneno,
-            clg_id,
-            // FIX: Changed 'role_id' to 'role_name' to match the Mongoose schema.
-            // This ensures 'admin' is captured from the Postman request body.
-            role_name 
-            // user_github_url is no longer received from the request body
-        } = req.body;
+        const { user_name, user_email, user_password, user_phoneno, college_name } = req.body;
 
-        // Check if user already exists (Good practice, adding a quick check here)
+        // Check if user already exists
         const existingUser = await User.findOne({ user_email });
         if (existingUser) {
-            return res.status(400).json({ message: 'User with this email already exists.' });
+            return res.status(400).json({ message: 'User already exists with this email' });
         }
 
+        // Hash password
+        const hashedPassword = await bcrypt.hash(user_password, 12);
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(user_password, salt);
-
+        // Create new user
         const newUser = new User({
             user_name,
             user_email,
             user_password: hashedPassword,
             user_phoneno,
-            clg_id,
-            // FIX: Assigning the captured role_name (e.g., "admin")
-            // If role_name is provided, it overrides the 'participant' default.
-            role_name
+            college_name,
+            role_name: 'participant' // Default role
         });
 
         await newUser.save();
-        
-        // Remove password before sending the response
-        const userResponse = newUser.toObject();
-        delete userResponse.user_password;
-        
-        res.status(201).json({ message: 'User registered successfully', user: userResponse });
+
+        res.status(201).json({ 
+            message: 'User registered successfully', 
+            user: { 
+                _id: newUser._id, 
+                user_name: newUser.user_name, 
+                user_email: newUser.user_email,
+                role_name: newUser.role_name
+            } 
+        });
     } catch (error) {
-        console.error(error);
+        console.error('Error registering user:', error);
         res.status(500).json({ message: 'Error registering user', error: error.message });
     }
 };
 
-export const getAvailableParticipants = async (req, res) => {
-    try {
-        const teams = await Team.find({}, 'members');
-        const assignedUserIds = teams.flatMap(team => team.members);
 
-        // FIX: Changed from hardcoded ObjectId to the string 'participant'
-        const participantRoleName = 'participant'; 
-        
-        const availableUsers = await User.find({
-            _id: { $nin: assignedUserIds },
-            // FIX: Querying on the new field name 'role_name'
-            role_name: participantRoleName 
-        });
-        
-        res.status(200).json(availableUsers);
-    } catch (error) {
-        console.error("Error fetching available participants:", error);
-        res.status(500).json({ message: "Server error while fetching participants" });
-    }
-};
-
-// --- Updated Function to Update User Role ---
+// ➡️ MODIFIED: Function to Update User Role for Mapping (Transfer List)
 export const updateUserRole = async (req, res) => {
     try {
         const { id } = req.params;
-        // Assuming the request body sends the new role under the key 'role'
-        const { role } = req.body; 
+        // Capture 'role' (new role_name) and 'current_hackathon'
+        const { role, current_hackathon } = req.body; 
 
-        // Included 'admin' in allowed roles since an existing admin might use this route
-        // to assign admin roles to new users.
         const allowedRoles = ['admin', 'evaluator', 'coordinator', 'participant'];
 
         if (!role || !allowedRoles.includes(role)) {
@@ -87,11 +87,15 @@ export const updateUserRole = async (req, res) => {
                 message: `Invalid role provided. Allowed roles: ${allowedRoles.join(', ')}.` 
             });
         }
-
-        // FIX: Updating the 'role_name' field in the database
+        
+        const updateData = { 
+            role_name: role, 
+            current_hackathon: current_hackathon || null // Clear if null is passed
+        };
+        
         const updatedUser = await User.findByIdAndUpdate(
             id,
-            { role_name: role }, // Use the correct field name 'role_name'
+            updateData, 
             { new: true, runValidators: true } 
         ).select('-user_password'); 
 
@@ -105,21 +109,26 @@ export const updateUserRole = async (req, res) => {
     }
 };
 
-// File: user.controller.js (Modified getAllUsers function)
-
-export const getAllUsers = async (req, res) => {
+// --- Delete User (for admin suspension) ---
+export const deleteUser = async (req, res) => {
     try {
-        const users = await User.find()
-            // Ensure the populate path is correct: 'clg_id'
-            .populate('clg_id', 'clg_name state') 
-            .select('-user_password'); 
-        res.status(200).json(users);
+        const { id } = req.params;
+        
+        // Remove user from any teams first
+        await Team.updateMany(
+            { members: id },
+            { $pull: { members: id } }
+        );
+        
+        // Delete the user
+        const deletedUser = await User.findByIdAndDelete(id);
+        
+        if (!deletedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        
+        res.status(200).json({ message: 'User deleted successfully' });
     } catch (error) {
-        // FIX: Add detailed server-side error logging to diagnose the Mongoose issue (e.g., failed populate)
-        console.error("Detailed Error fetching users:", error); 
-        res.status(500).json({ 
-            message: 'Error fetching users from server. Check server logs for populate issues.', 
-            error: error.message 
-        });
+        res.status(500).json({ message: 'Error deleting user', error: error.message });
     }
 };

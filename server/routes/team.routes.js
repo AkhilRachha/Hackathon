@@ -1,5 +1,5 @@
 import express from 'express';
-import { createTeam, getTeams, getMyTeam } from '../controllers/team.controller.js';
+import { createTeam, getTeams, getMyTeam, deleteTeam, updateTeam, getTeamById } from '../controllers/team.controller.js';
 
 const router = express.Router();
 
@@ -9,5 +9,10 @@ router.post('/', createTeam); // Route for POST /api/teams
 // NEW: Route to get a specific team for the logged-in participant
 // This is the route that is correctly accessed by the frontend now: /api/teams/my-team/:userId
 router.get('/my-team/:userId', getMyTeam);
+
+// CRUD routes for individual teams
+router.get('/:id', getTeamById);
+router.put('/:id', updateTeam);
+router.delete('/:id', deleteTeam);
 
 export default router;

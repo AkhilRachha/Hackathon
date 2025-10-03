@@ -6,29 +6,21 @@ export const loginUser = async (req, res) => {
     try {
         const { user_email, user_password } = req.body;
 
-        // --- Add these console logs for debugging ---
-        console.log(`Login attempt for: ${user_email}`);
         const user = await User.findOne({ user_email });
         
         if (!user) {
-            console.log("User not found in DB.");
             return res.status(401).json({ message: 'Invalid credentials' });
         }
-        console.log("User found. Comparing passwords...");
 
         const isMatch = await bcrypt.compare(user_password, user.user_password);
-        console.log("Password match result:", isMatch);
 
         if (!isMatch) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        // --- FIX IS HERE: GENERATE AND SEND A TOKEN ---
-
         // 2. Create a JWT payload
         const payload = {
             id: user._id,
-            // FIX: Changed 'role_id' to 'role_name' for consistency with User model
             role: user.role_name 
         };
 
@@ -46,8 +38,9 @@ export const loginUser = async (req, res) => {
             user: {
                 _id: user._id,
                 user_name: user.user_name,
-                // FIX: Changed 'role_id' to 'role_name' in the response object
-                role_name: user.role_name 
+                role_name: user.role_name,
+                // ➡️ NEW: Send the current hackathon ID
+                current_hackathon: user.current_hackathon 
             }
         });
 

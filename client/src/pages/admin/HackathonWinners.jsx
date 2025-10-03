@@ -1,81 +1,142 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import DefaultLayout from '@/components/DefaultLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy } from 'lucide-react';
-import { toast } from '@/hooks/use-toast'; // Assuming toast is available via the hook
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Trophy, Calendar, CheckCircle, Award, Star } from 'lucide-react';
+// Assuming getHackathonWinners exists in hackathonApi.js
+import { getHackathonWinners } from '@/api/hackathonApi'; 
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 
 const HackathonWinners = () => {
-    // Replaced Mock data with state and added loading
-    const [pastHackathons, setPastHackathons] = useState([]);
+    const [completedHackathons, setCompletedHackathons] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const { toast } = useToast();
 
     useEffect(() => {
         const fetchWinners = async () => {
             try {
-                // Fetch past winners from the backend
-                const response = await axios.get('http://localhost:5000/api/hackathon-winners');
-                setPastHackathons(response.data);
-            } catch (error) {
-                console.error("Error fetching hackathon winners:", error);
-                toast({ title: "Error", description: "Failed to fetch hackathon winners." });
+                // ➡️ Call the API to fetch completed hackathons with populated winner fields
+                const response = await getHackathonWinners();
+                // Ensure the data is an array before setting
+                if (Array.isArray(response.data)) {
+                    setCompletedHackathons(response.data);
+                } else {
+                    setCompletedHackathons([]);
+                    console.warn("API did not return an array for winners:", response.data);
+                }
+            } catch (err) {
+                console.error("Error fetching winners:", err);
+                setError('Failed to fetch hackathon winners list.');
+                toast({
+                    title: "Error",
+                    description: "Failed to load past winners data.",
+                    variant: "destructive",
+                });
             } finally {
                 setLoading(false);
             }
         };
+
         fetchWinners();
-    }, []);
+    }, [toast]);
+
+    const getWinnerBadge = (team, place) => {
+        if (!team) {
+            return <Badge variant="secondary" className="bg-gray-200 text-gray-700">TBD</Badge>;
+        }
+        
+        let color = '';
+        if (place === 1) color = 'bg-yellow-500 hover:bg-yellow-600';
+        else if (place === 2) color = 'bg-slate-400 hover:bg-slate-500';
+        else if (place === 3) color = 'bg-amber-700 hover:bg-amber-800';
+
+        return (
+            <Badge className={`${color} text-white font-semibold flex items-center gap-1`}>
+                <Star className="w-4 h-4" /> {team.team_name}
+            </Badge>
+        );
+    };
 
     if (loading) {
         return (
             <DefaultLayout userRole="admin">
-                <div className="flex justify-center items-center min-h-screen">Loading Winners Data...</div>
+                <div className="p-8"><Skeleton className="h-40 w-full" /></div>
+            </DefaultLayout>
+        );
+    }
+
+    if (error) {
+        return (
+            <DefaultLayout userRole="admin">
+                <div className="p-8">
+                    <Card className="border-red-500">
+                        <CardHeader><CardTitle className="text-red-600">Error</CardTitle></CardHeader>
+                        <CardContent>{error}</CardContent>
+                    </Card>
+                </div>
             </DefaultLayout>
         );
     }
 
     return (
         <DefaultLayout userRole="admin">
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-amber-50/30">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
-                    className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
-                >
-                    <h1 className="text-4xl font-bold mb-8">Hackathon Winners</h1>
-
-                    {pastHackathons.length > 0 ? (
-                        pastHackathons.map(hackathon => (
-                            <Card key={hackathon.id} className="mb-8">
-                                <CardHeader>
-                                    <CardTitle className="text-2xl">{hackathon.name}</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="flex items-center text-xl">
-                                        <Trophy className="h-6 w-6 mr-2 text-yellow-500" />
-                                        <span className="font-bold">Winner:</span>&nbsp;{hackathon.winner}
-                                    </div>
-                                    <div className="flex items-center text-lg">
-                                        <Trophy className="h-5 w-5 mr-2 text-gray-400" />
-                                        <span>1st Runner-up:</span>&nbsp;{hackathon.firstRunnerUp}
-                                    </div>
-                                    <div className="flex items-center text-lg">
-                                        <Trophy className="h-5 w-5 mr-2 text-orange-400" />
-                                        <span>2nd Runner-up:</span>&nbsp;{hackathon.secondRunnerUp}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))
-                    ) : (
-                        <Card>
-                            <CardContent className="p-8 text-center text-gray-500">
-                                No past hackathons to display.
-                            </CardContent>
-                        </Card>
-                    )}
-                </motion.div>
+            <div className="p-8 max-w-7xl mx-auto">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+                            <Award className="w-8 h-8 text-yellow-600"/> Past Hackathon Winners
+                        </CardTitle>
+                        <CardDescription>
+                            Review the results and winning teams for all completed hackathon events.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {completedHackathons.length === 0 ? (
+                            <div className="text-center py-10">
+                                <p className="text-xl font-semibold text-gray-700 mb-2">No Completed Hackathons Found</p>
+                                <p className="text-gray-500">Winners can only be displayed for events marked as 'completed'.</p>
+                            </div>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-gray-50">
+                                        <TableHead className="w-[30%]">Hackathon Title</TableHead>
+                                        <TableHead className="text-center">End Date</TableHead>
+                                        <TableHead className="w-[15%]">1st Place</TableHead>
+                                        <TableHead className="w-[15%]">2nd Place</TableHead>
+                                        <TableHead className="w-[15%]">3rd Place</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {completedHackathons.map((hackathon) => (
+                                        <TableRow key={hackathon._id}>
+                                            <TableCell className="font-medium text-lg text-blue-800">
+                                                {hackathon.title}
+                                            </TableCell>
+                                            <TableCell className="text-center text-gray-600 flex items-center justify-center gap-1">
+                                                <Calendar className="w-4 h-4"/> 
+                                                {format(new Date(hackathon.endDate), 'MMM d, yyyy')}
+                                            </TableCell>
+                                            <TableCell>
+                                                {getWinnerBadge(hackathon.winners.firstPlace, 1)}
+                                            </TableCell>
+                                            <TableCell>
+                                                {getWinnerBadge(hackathon.winners.secondPlace, 2)}
+                                            </TableCell>
+                                            <TableCell>
+                                                {getWinnerBadge(hackathon.winners.thirdPlace, 3)}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
         </DefaultLayout>
     );

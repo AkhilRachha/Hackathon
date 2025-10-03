@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 // 🎯 CRITICAL CHANGE: Import the configured axios instance
-import axios from '@/lib/axiosInstance'; 
+import axios from '@/api/axiosInstance'; 
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 import DefaultLayout from '@/components/DefaultLayout';
@@ -80,7 +80,6 @@ const Trash = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" widt
 const Loader2 = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>;
 const motion = { div: ({ children, ...props }) => <div {...props}>{children}</div> };
 
-
 // --- Main Application Component (Titles) ---
 
 const Titles = () => {
@@ -96,7 +95,7 @@ const Titles = () => {
   const fetchTitles = async () => {
     try {
       // 🎯 MODIFIED: Use axios instance with relative path. Auth header and base URL are automatic.
-      const response = await axios.get('/hackathons/domains-and-questions'); 
+      const response = await axios.get('/api/hackathons/domains-and-questions'); 
       
       if (Array.isArray(response.data)) {
         setDomains(response.data);
@@ -176,7 +175,6 @@ const Titles = () => {
       setDomains(newDomains);
   };
 
-
   const handleDeleteProject = async (domainIndex, projectIndex) => {
     const project = domains[domainIndex].projects[projectIndex];
     
@@ -184,7 +182,7 @@ const Titles = () => {
     if (project._id) {
       try {
         // 🎯 MODIFIED: Use axios instance with relative path and project ID.
-        await axios.delete(`/questions/${project._id}`);
+        await axios.delete(`/api/questions/${project._id}`);
         showToast({ title: "Deleted", description: `${project.title} permanently removed from MongoDB.` });
       } catch (err) {
         console.error("Delete Error:", err);
@@ -223,11 +221,11 @@ const Titles = () => {
     try {
       if (project._id) {
         // 🎯 MODIFIED: HTTP PUT using axios instance.
-        await axios.put(`/questions/${project._id}`, payload);
+        await axios.put(`/api/questions/${project._id}`, payload);
         showToast({ title: "Updated", description: `${project.title} updated successfully in MongoDB.` });
       } else {
         // 🎯 MODIFIED: HTTP POST using axios instance.
-        const res = await axios.post('/questions', payload);
+        const res = await axios.post('/api/questions', payload);
         
         // Update local state with the new MongoDB ID from the response
         const newDomains = [...domains];

@@ -82,7 +82,7 @@ const Register = () => {
     const fetchStates = async () => {
       try {
         // FIX 2: Correct API path for states
-        const response = await axios.get('http://localhost:5000/api/colleges/states');
+        const response = await axios.get('http://localhost:9000/api/colleges/states');
         setStates(response.data);
       } catch (error) {
         console.error('Error fetching states', error);
@@ -103,7 +103,7 @@ const Register = () => {
       setIsLoadingColleges(true);
       try {
         // FIX 3: Correct API path for colleges by state (based on college.routes.js)
-        const response = await axios.get(`http://localhost:5000/api/colleges/colleges/${selectedState}`);
+        const response = await axios.get(`http://localhost:9000/api/colleges/colleges/${selectedState}`);
         setColleges(response.data);
       } catch (error) {
         console.error('Error fetching colleges for state', error);
@@ -140,7 +140,7 @@ const Register = () => {
     // Step 1: If user selected "Other", create the new college first
     if (data.clg_id === 'other') {
       try {
-        const collegeResponse = await axios.post('http://localhost:5000/api/colleges', {
+        const collegeResponse = await axios.post('http://localhost:9000/api/colleges/colleges', {
           clg_name: data.other_clg_name,
           district: data.other_clg_district,
           state: data.other_clg_state,
@@ -166,7 +166,7 @@ const Register = () => {
       };
 
       // The registration endpoint is /api/register (mounted in authRoutes)
-      await axios.post('http://localhost:5000/api/register', userPayload);
+      await axios.post('http://localhost:9000/api/register', userPayload);
       
       toast({ title: "Success", description: 'Registration successful! Please log in.' });
       navigate('/login');

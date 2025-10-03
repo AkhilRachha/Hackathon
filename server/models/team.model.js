@@ -17,6 +17,11 @@ const teamSchema = new Schema({
         type: Schema.Types.ObjectId, 
         ref: 'User' 
     }],
+    hackathon_id: { 
+        type: Schema.Types.ObjectId, 
+        ref: 'Hackathon',
+        required: true 
+    },
     coordinator: { 
         type: Schema.Types.ObjectId, 
         ref: 'User' 

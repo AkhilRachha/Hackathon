@@ -13,9 +13,11 @@ import ViewHackathon from './pages/admin/ViewHackathon';
 import HackathonWinners from './pages/admin/HackathonWinners';
 import Titles from './pages/admin/Titles';
 import RoleMapping from './pages/admin/RoleMapping'; 
+// ➡️ NEW ADMIN PAGE IMPORT
+import HackathonManagement from './pages/admin/HackathonManagement'; 
+
+// Unified Dashboard for non-admins
 import ParticipantDashboard from './pages/participant/ParticipantDashboard';
-import EvaluatorDashboard from './pages/evaluator/EvaluatorDashboard';
-import CoordinatorPage from './pages/coordinator/CoordinatorPage';
 
 function App() {
   return (
@@ -39,16 +41,16 @@ function App() {
           <Route path="/admin/view-hackathon" element={<ViewHackathon />} />
           <Route path="/admin/hackathon-winners" element={<HackathonWinners />} />
           <Route path="/admin/titles" element={<Titles />} />
-          <Route path="/admin/role-mapping" element={<RoleMapping />} /> {/* Route for User Role Management */}
+          <Route path="/admin/role-mapping" element={<RoleMapping />} /> 
+          
+          {/* ➡️ NEW ROUTE: Dedicated Management Page */}
+          <Route path="/admin/manage-hackathon/:hackathonId" element={<HackathonManagement />} />
 
-          {/* --- Coordinator Route --- */}
-          <Route path="/coordinator" element={<CoordinatorPage />} />
-          
-          {/* --- Participant Route --- */}
+          {/* --- Unified Non-Admin Routes --- */}
+          <Route path="/coordinator" element={<ParticipantDashboard />} />
           <Route path="/participant" element={<ParticipantDashboard />} />
+          <Route path="/evaluator-dashboard" element={<ParticipantDashboard />} />
           
-          {/* --- Evaluator Route --- */}
-          <Route path="/evaluator-dashboard" element={<EvaluatorDashboard />} />
         </Routes>
         
         <Toaster />

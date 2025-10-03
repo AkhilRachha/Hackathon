@@ -16,12 +16,12 @@ export const getTeams = async (req, res) => {
 // --- Function to create a new team ---
 export const createTeam = async (req, res) => {
     try {
-        const { team_name, members, q_id, coordinator, user_github_url, max_members } = req.body;
+        const { team_name, members, q_id, coordinator, user_github_url, max_members, hackathon_id } = req.body;
 
-        // 1. Check for duplicate team name
-        const existingTeam = await Team.findOne({ team_name });
+        // 1. Check for duplicate team name within the same hackathon
+        const existingTeam = await Team.findOne({ team_name, hackathon_id });
         if (existingTeam) {
-            return res.status(400).json({ message: "A team with this name already exists." });
+            return res.status(400).json({ message: "A team with this name already exists in this hackathon." });
         }
 
         // 2. Create the new team instance
@@ -31,16 +31,24 @@ export const createTeam = async (req, res) => {
             q_id,
             coordinator,
             user_github_url,
-            max_members
+            max_members,
+            hackathon_id
         });
 
         // 3. Save to the database
         await newTeam.save();
-        res.status(201).json({ message: 'Team created successfully!', team: newTeam });
+        
+        // 4. Populate the team data for response
+        const populatedTeam = await Team.findById(newTeam._id)
+            .populate('members', 'user_name user_email')
+            .populate('q_id')
+            .populate('coordinator', 'user_name');
+        
+        res.status(201).json({ message: 'Team created successfully!', team: populatedTeam });
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Server error while creating team', error });
+        res.status(500).json({ message: 'Server error while creating team', error: error.message });
     }
 };
 export const getMyTeam = async (req, res) => {
@@ -64,5 +72,63 @@ export const getMyTeam = async (req, res) => {
         res.status(200).json(team);
     } catch (error) {
         res.status(500).json({ message: 'Server error while fetching your team', error });
+    }
+};
+
+// --- Get team by ID ---
+export const getTeamById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const team = await Team.findById(id)
+            .populate('members', 'user_name user_email')
+            .populate('q_id')
+            .populate('coordinator', 'user_name');
+
+        if (!team) {
+            return res.status(404).json({ message: 'Team not found' });
+        }
+
+        res.status(200).json(team);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching team', error: error.message });
+    }
+};
+
+// --- Update team ---
+export const updateTeam = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updateData = req.body;
+
+        const updatedTeam = await Team.findByIdAndUpdate(id, updateData, { 
+            new: true, 
+            runValidators: true 
+        }).populate('members', 'user_name user_email')
+          .populate('q_id')
+          .populate('coordinator', 'user_name');
+
+        if (!updatedTeam) {
+            return res.status(404).json({ message: 'Team not found' });
+        }
+
+        res.status(200).json({ message: 'Team updated successfully', team: updatedTeam });
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating team', error: error.message });
+    }
+};
+
+// --- Delete team ---
+export const deleteTeam = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deletedTeam = await Team.findByIdAndDelete(id);
+
+        if (!deletedTeam) {
+            return res.status(404).json({ message: 'Team not found' });
+        }
+
+        res.status(200).json({ message: 'Team deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting team', error: error.message });
     }
 };

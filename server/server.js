@@ -1,3 +1,4 @@
+// server.js
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -9,19 +10,18 @@ import teamRoutes from './routes/team.routes.js';
 import questionRoutes from './routes/question.routes.js'; 
 import collegeRoutes from './routes/college.routes.js';
 import roleRoutes from './routes/role.routes.js'; 
-// ADDED: Import the new dedicated Auth Routes
 import authRoutes from './routes/auth.routes.js'; 
 import scoreRoutes from './routes/score.routes.js';
 import evaluationRoutes from './routes/evaluation.routes.js';
 import winnerRoutes from './routes/hackathonWinner.routes.js';
-import hackathonRoutes from './routes/hackathon.routes.js';
+import hackathonRoutes from './routes/hackathon.routes.js'; // Hackathon management routes
 
 // Load environment variables
 dotenv.config();
 
 // Initialize the Express app
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8000;
 
 // Connect to the database
 connectDB(); 
@@ -32,21 +32,21 @@ app.use(express.json());
 
 // --- API Routes ---
 
-// AUTH ROUTES: Mounted directly under /api for /api/login and /api/register
+// AUTH ROUTES: /api/login, /api/register
 app.use('/api', authRoutes); 
 
-// USER MANAGEMENT ROUTES: Mounted under /api/users for user list and role mapping
+// CORE RESOURCE ROUTES: Ensure mounted paths match client expectations
 app.use('/api/users', userRoutes); 
-
-// Other Resource Routes (Mounted correctly under their respective resource name)
 app.use('/api/teams', teamRoutes);
-app.use('/api', questionRoutes); 
 app.use('/api/colleges', collegeRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/scores', scoreRoutes);
 app.use('/api/evaluations', evaluationRoutes);
 app.use('/api/winners', winnerRoutes);
-app.use('/api/hackathons', hackathonRoutes); 
+app.use('/api/hackathons', hackathonRoutes); // ✅ Correct: All hackathon routes start here
+
+// QUESTION ROUTES (Mounted strangely, but matching the provided structure)
+app.use('/api', questionRoutes); 
 
 // --- Start the Server ---
 app.listen(PORT, () => {

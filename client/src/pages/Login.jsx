@@ -28,7 +28,8 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await fetch('http://localhost:5000/api/login', {
+      // NOTE: Using direct fetch for simplicity, ensure this matches your setup
+      const response = await fetch('http://localhost:9000/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_email: data.email, user_password: data.password }),
@@ -42,19 +43,23 @@ const Login = () => {
         localStorage.setItem('token', result.token);
         localStorage.setItem('userId', result.user._id); 
         localStorage.setItem('userName', result.user.user_name); 
-        
-        // FIX 1: Save the consistent role_name string from the backend response
         localStorage.setItem('userRole', result.user.role_name);
 
-        // FIX 2: Map role names (strings) to dashboard paths for redirection
+        // ➡️ NEW: Store the current_hackathon ID (will be null if user is free)
+        if (result.user.current_hackathon) {
+            localStorage.setItem('currentHackathonId', result.user.current_hackathon);
+        } else {
+            localStorage.removeItem('currentHackathonId');
+        }
+
         const roleRoutes = {
           'admin': '/admin',
-          'coordinator': '/coordinator',
+          // ➡️ FIX: Redirect all non-admins to the single selection/dashboard page
+          'coordinator': '/participant', 
           'participant': '/participant',
-          'evaluator': '/evaluator-dashboard',
+          'evaluator': '/participant',
         };
 
-        // FIX 3: Read the correct property (role_name) for mapping
         const userRoleName = result.user.role_name; 
         
         const redirectPath = roleRoutes[userRoleName] || '/';
@@ -81,7 +86,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background decoration */}
       <div className="absolute inset-0">
         <div className="absolute top-1/4 right-1/4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />

@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle, Eye, Trophy, LogOut } from 'lucide-react';
+import { PlusCircle, Eye, Trophy, LogOut, FileText } from 'lucide-react'; // Added FileText icon
 import DefaultLayout from '@/components/DefaultLayout';
 
 const AdminLanding = () => {
@@ -47,7 +47,9 @@ const AdminLanding = () => {
                                 Please select an action
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="p-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <CardContent className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            {/* 1. Create Hackathon */}
                             <motion.div whileHover={{ y: -5, scale: 1.05 }} transition={{ duration: 0.2 }}>
                                 <Button
                                     onClick={() => navigate('/admin/create-hackathon')}
@@ -57,22 +59,37 @@ const AdminLanding = () => {
                                     Create Hackathon
                                 </Button>
                             </motion.div>
+                            
+                            {/* 2. View/edit Active Hackathon (Redirects to list view) */}
                             <motion.div whileHover={{ y: -5, scale: 1.05 }} transition={{ duration: 0.2 }}>
                                 <Button
                                     onClick={() => navigate('/admin/view-hackathon')}
                                     className="w-full h-24 text-lg font-semibold bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg rounded-xl flex flex-col items-center justify-center"
                                 >
                                     <Eye className="w-8 h-8 mb-2" />
-                                    View Hackathon
+                                    View/edit Active Hackathon
                                 </Button>
                             </motion.div>
+                            
+                            {/* 3. View Past winner */}
                             <motion.div whileHover={{ y: -5, scale: 1.05 }} transition={{ duration: 0.2 }}>
                                 <Button
                                     onClick={() => navigate('/admin/hackathon-winners')}
                                     className="w-full h-24 text-lg font-semibold bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg rounded-xl flex flex-col items-center justify-center"
                                 >
                                     <Trophy className="w-8 h-8 mb-2" />
-                                    View Winners
+                                    View Past winner
+                                </Button>
+                            </motion.div>
+                            
+                            {/* 4. Add Domains and criteria (Assuming this maps to an existing Titles page or similar) */}
+                            <motion.div whileHover={{ y: -5, scale: 1.05 }} transition={{ duration: 0.2 }}>
+                                <Button
+                                    onClick={() => navigate('/admin/titles')}
+                                    className="w-full h-24 text-lg font-semibold bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg rounded-xl flex flex-col items-center justify-center"
+                                >
+                                    <FileText className="w-8 h-8 mb-2" />
+                                    Add Domains and criteria
                                 </Button>
                             </motion.div>
                         </CardContent>
