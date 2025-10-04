@@ -1,27 +1,26 @@
-// src/api/axiosInstance.js
 import axios from 'axios';
 
 const api = axios.create({
-    // 💡 IMPORTANT: Set this to your backend server URL
-    // e.g., 'http://localhost:5000' or whatever port your server runs on.
-    baseURL: 'http://localhost:9000', 
-    headers: {
-        'Content-Type': 'application/json',
-    },
+  // Set the full base URL for your backend API
+  baseURL: 'http://localhost:9000/api', 
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-// Add request interceptor to include auth token
+// This part automatically adds your login token to every API request
 api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
+  (config) => {
+    // Make sure 'authToken' is the key you use to save the token in localStorage
+    const token = localStorage.getItem('authToken'); 
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 export default api;

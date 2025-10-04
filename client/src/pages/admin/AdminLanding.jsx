@@ -89,7 +89,7 @@ const AdminLanding = () => {
                                     className="w-full h-24 text-lg font-semibold bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg rounded-xl flex flex-col items-center justify-center"
                                 >
                                     <FileText className="w-8 h-8 mb-2" />
-                                    Add Domains and criteria
+                                    Add Questions
                                 </Button>
                             </motion.div>
                         </CardContent>

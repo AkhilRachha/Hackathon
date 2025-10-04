@@ -1,59 +1,27 @@
+// pages/coordinator/CoordinatorDashboard.jsx
+// KEY FIX: This is now a "dumb" component that receives all data via props and does not fetch data itself.
+
 import { motion } from 'framer-motion';
+import { useNavigate } from "react-router-dom";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Users, ClipboardList, CheckCircle, Clock, AlertCircle, PlusCircle, Link as LinkIcon, LogOut, UserCheck } from 'lucide-react';
-import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from 'react'; // <-- ADDED: Import useState and useEffect
+import { 
+    Users, 
+    ClipboardList, 
+    CheckCircle, 
+    Clock, 
+    AlertCircle, 
+    PlusCircle, 
+    Link as LinkIcon, 
+    LogOut, 
+    UserCheck 
+} from 'lucide-react';
 
-/**
- * A redesigned dashboard component to match the admin theme.
- * It receives all data and navigation functions as props.
- * @param {object} props
- * @param {Array} props.myTeams - List of teams managed by the current coordinator.
- * @param {Array} props.allTeams - List of all teams in the system.
- * @param {Function} props.onNavigateToRegister - Function to switch to the registration view.
- */
-const CoordinatorDashboard = ({ myTeams = [], allTeams = [], onNavigateToRegister }) => {
+const CoordinatorDashboard = ({ myTeams = [], allTeams = [], availableParticipants = [], onNavigateToRegister }) => {
     const navigate = useNavigate();
-
-    // --- ADDED: State to manage the available participants and loading status ---
-    const [availableParticipants, setAvailableParticipants] = useState([]);
-    const [loadingParticipants, setLoadingParticipants] = useState(true);
-    const [error, setError] = useState(null);
-
-    // --- ADDED: useEffect hook to fetch data on component mount ---
-    useEffect(() => {
-        const fetchAvailableParticipants = async () => {
-            try {
-                // Get the token from local storage (if your API requires it)
-                const token = localStorage.getItem('token'); 
-
-                const response = await fetch('http://localhost:5000/api/users/participants/available', {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` // Pass the token in the header
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch available participants.');
-                }
-                
-                const data = await response.json();
-                setAvailableParticipants(data);
-            } catch (err) {
-                console.error("Error fetching participants:", err);
-                setError(err.message);
-            } finally {
-                setLoadingParticipants(false);
-            }
-        };
-
-        fetchAvailableParticipants();
-    }, []); // Empty dependency array ensures this runs only once on mount
 
     const handleLogout = () => {
         localStorage.clear(); 
@@ -76,7 +44,6 @@ const CoordinatorDashboard = ({ myTeams = [], allTeams = [], onNavigateToRegiste
         );
     };
 
-    // --- NEW: A reusable table component for participants ---
     const ParticipantsTable = ({ participants }) => (
         <Table>
             <TableHeader>
@@ -132,7 +99,7 @@ const CoordinatorDashboard = ({ myTeams = [], allTeams = [], onNavigateToRegiste
                             </div>
                         </TableCell>
                         <TableCell>
-                            {team.project ? <Badge variant="secondary">{team.project}</Badge> : <span className="text-gray-500 italic">Not assigned</span>}
+                            {team.project !== 'N/A' ? <Badge variant="secondary">{team.project}</Badge> : <span className="text-gray-500 italic">Not assigned</span>}
                         </TableCell>
                         <TableCell>
                             {team.github ? <a href={team.github} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1"><LinkIcon size={14}/> Link</a> : <span className="text-gray-500 italic">No repo</span>}
@@ -171,7 +138,7 @@ const CoordinatorDashboard = ({ myTeams = [], allTeams = [], onNavigateToRegiste
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6"> {/* Changed grid to 4 columns */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
@@ -183,7 +150,7 @@ const CoordinatorDashboard = ({ myTeams = [], allTeams = [], onNavigateToRegiste
                     <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
-                                <div><p className="text-sm font-medium text-gray-600">Projects Assigned</p><p className="text-3xl font-bold text-emerald-600">{myTeams.filter(team => team.project).length}</p></div>
+                                <div><p className="text-sm font-medium text-gray-600">Projects Assigned</p><p className="text-3xl font-bold text-emerald-600">{myTeams.filter(team => team.project !== 'N/A').length}</p></div>
                                 <ClipboardList className="w-8 h-8 text-emerald-500" />
                             </div>
                         </CardContent>
@@ -191,12 +158,11 @@ const CoordinatorDashboard = ({ myTeams = [], allTeams = [], onNavigateToRegiste
                     <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
-                                <div> <p className="text-sm font-medium text-gray-600">Pending Assignments</p><p className="text-3xl font-bold text-amber-600">{myTeams.filter(team => !team.project).length}</p></div>
+                                <div> <p className="text-sm font-medium text-gray-600">Pending Assignments</p><p className="text-3xl font-bold text-amber-600">{myTeams.filter(team => team.project === 'N/A').length}</p></div>
                                 <Clock className="w-8 h-8 text-amber-500" />
                             </div>
                         </CardContent>
                     </Card>
-                    {/* --- ADDED: Card for Available Participants --- */}
                     <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
@@ -217,10 +183,10 @@ const CoordinatorDashboard = ({ myTeams = [], allTeams = [], onNavigateToRegiste
                     </CardHeader>
                     <CardContent>
                         <Tabs defaultValue="my-teams" className="w-full">
-                            <TabsList className="grid w-full grid-cols-3 bg-slate-200/60"> {/* Adjusted to 3 columns */}
+                            <TabsList className="grid w-full grid-cols-3 bg-slate-200/60">
                                 <TabsTrigger value="my-teams">My Teams</TabsTrigger>
                                 <TabsTrigger value="all-teams">All Teams</TabsTrigger>
-                                <TabsTrigger value="available-participants">Available Participants</TabsTrigger> {/* ADDED: New tab trigger */}
+                                <TabsTrigger value="available-participants">Available Participants</TabsTrigger>
                             </TabsList>
                             <TabsContent value="my-teams" className="mt-6">
                                 <div className="bg-white rounded-lg border border-gray-200/80 overflow-x-auto"><TeamTable teamList={myTeams} /></div>
@@ -228,20 +194,11 @@ const CoordinatorDashboard = ({ myTeams = [], allTeams = [], onNavigateToRegiste
                             <TabsContent value="all-teams" className="mt-6">
                                 <div className="bg-white rounded-lg border border-gray-200/80 overflow-x-auto"><TeamTable teamList={allTeams} /></div>
                             </TabsContent>
-                            
-                            {/* --- ADDED: New TabsContent for Available Participants --- */}
                             <TabsContent value="available-participants" className="mt-6">
                                 <div className="bg-white rounded-lg border border-gray-200/80 overflow-x-auto">
-                                    {loadingParticipants ? (
-                                        <div className="text-center py-8 text-gray-500">Loading participants...</div>
-                                    ) : error ? (
-                                        <div className="text-center py-8 text-red-500">Error: {error}</div>
-                                    ) : (
-                                        <ParticipantsTable participants={availableParticipants} />
-                                    )}
+                                    <ParticipantsTable participants={availableParticipants} />
                                 </div>
                             </TabsContent>
-
                         </Tabs>
                     </CardContent>
                 </Card>

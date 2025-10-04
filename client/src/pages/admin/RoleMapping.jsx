@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, Save, User, UserCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAllUsers, updateUserRole } from '@/api/userApi'; 
-import { getAllHackathons } from '@/api/hackathonApi'; 
+import { getAllHackathons } from '@/api/hackathonApi'; // Kept for title lookup
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input'; 
 
 // ------------------------------------------------------------------
 // TRANSFER LIST UI COMPONENT (ListBox)
@@ -47,19 +48,32 @@ const UserListBox = ({ users, selected, setSelected }) => (
 // ------------------------------------------------------------------
 
 const RoleMapping = () => {
-    const [allUsers, setAllUsers] = useState([]); 
-    const [hackathons, setHackathons] = useState([]);
     
-    const [selectedHackathon, setSelectedHackathon] = useState('');
+    // 🛑 CRITICAL CHANGE: HARDCODED HACKATHON ID 
+    // You MUST replace this placeholder ID with the actual ID of the hackathon you are managing.
+    const tempHackathonId = '60f903a0b5c4e7d8e9f0a1b2'; 
+
+    const [allUsers, setAllUsers] = useState([]); 
+    const [hackathons, setHackathons] = useState([]); 
+    
+    // Initialize selectedHackathon with the hardcoded ID
+    const [selectedHackathon, setSelectedHackathon] = useState(tempHackathonId); 
     const [targetRole, setTargetRole] = useState('coordinator'); 
     const [loading, setLoading] = useState(true);
     const [selectedAvailable, setSelectedAvailable] = useState([]);
     const [selectedAssigned, setSelectedAssigned] = useState([]);
+    const [searchTerm, setSearchTerm] = useState(''); 
     const { toast } = useToast();
+
+    // Ensure state is set to the hardcoded ID initially
+    useEffect(() => {
+        setSelectedHackathon(tempHackathonId);
+    }, [tempHackathonId]);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // Fetch all users and all hackathons (needed for title lookup)
                 const [userRes, hackathonRes] = await Promise.all([
                     getAllUsers(), 
                     getAllHackathons()
@@ -69,6 +83,7 @@ const RoleMapping = () => {
                 setAllUsers(usersArray); 
                 
                 setHackathons(hackathonRes.data);
+                
             } catch (error) {
                 toast({ title: "Error", description: "Failed to load initial data.", variant: "destructive" });
                 console.error("Fetch Error:", error);
@@ -85,9 +100,22 @@ const RoleMapping = () => {
         (user.current_hackathon === null || user.current_hackathon === undefined)
     );
     
+    // Assigned users are filtered by the hardcoded/current hackathon ID
     const assignedUsers = allUsers.filter(user => 
         user.role_name === targetRole && 
         user.current_hackathon === selectedHackathon
+    );
+    
+    // Added Search Filtering
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+    const filteredAvailableUsers = availableUsers.filter(user => 
+        user.user_name.toLowerCase().includes(lowerCaseSearchTerm) ||
+        user.user_email.toLowerCase().includes(lowerCaseSearchTerm)
+    );
+
+    const filteredAssignedUsers = assignedUsers.filter(user => 
+        user.user_name.toLowerCase().includes(lowerCaseSearchTerm) ||
+        user.user_email.toLowerCase().includes(lowerCaseSearchTerm)
     );
 
 
@@ -97,7 +125,7 @@ const RoleMapping = () => {
 
     const handleAssign = async () => {
         if (!selectedHackathon) {
-            return toast({ title: "Error", description: "Please select a hackathon first.", variant: "destructive" });
+            return toast({ title: "Error", description: "Hackathon target ID is missing. Cannot assign roles.", variant: "destructive" });
         }
         if (selectedAvailable.length === 0) return;
 
@@ -107,7 +135,6 @@ const RoleMapping = () => {
 
         for (const userId of userIdsToUpdate) {
             try {
-                // Payload: Set the new role and link them to the hackathon
                 await updateUserRole(userId, { 
                     role: targetRole, 
                     current_hackathon: selectedHackathon 
@@ -118,7 +145,6 @@ const RoleMapping = () => {
             }
         }
 
-        // 2. Optimistic UI Update: Update the local state
         if (successCount > 0) {
             const updatedUsers = allUsers.map(u => 
                 userIdsToUpdate.includes(u._id) 
@@ -127,14 +153,14 @@ const RoleMapping = () => {
             );
             setAllUsers(updatedUsers);
             setSelectedAvailable([]); 
-            toast({ title: "Success", description: `${successCount} user(s) successfully assigned as ${targetRole}.` });
+            toast({ title: "Success", description: `${successCount} user(s) successfully assigned as ${targetRole} for the current hackathon.` });
         }
         setLoading(false);
     };
 
     const handleUnassign = async () => {
         if (!selectedHackathon) {
-            return toast({ title: "Error", description: "Please select a hackathon first.", variant: "destructive" });
+            return toast({ title: "Error", description: "Hackathon target ID is missing. Cannot unassign roles.", variant: "destructive" });
         }
         if (selectedAssigned.length === 0) return;
 
@@ -144,7 +170,6 @@ const RoleMapping = () => {
         
         for (const userId of userIdsToUpdate) {
             try {
-                // Payload: Revert user to 'participant' role and clear current_hackathon (passing null clears the field)
                 await updateUserRole(userId, { 
                     role: 'participant', 
                     current_hackathon: null 
@@ -155,7 +180,6 @@ const RoleMapping = () => {
             }
         }
 
-        // 2. Optimistic UI Update: Update the local state
         if (successCount > 0) {
             const updatedUsers = allUsers.map(u => 
                 userIdsToUpdate.includes(u._id) 
@@ -178,7 +202,8 @@ const RoleMapping = () => {
         );
     }
     
-    const selectedHackathonTitle = hackathons.find(h => h._id === selectedHackathon)?.title;
+    // Safely retrieve the hackathon title based on the hardcoded ID
+    const selectedHackathonTitle = hackathons.find(h => h._id === selectedHackathon)?.title || 'Selected Hackathon';
 
     return (
         <DefaultLayout userRole="admin">
@@ -190,27 +215,16 @@ const RoleMapping = () => {
                 <Card className="shadow-lg">
                     <CardHeader>
                         <CardTitle className="text-2xl">Configuration</CardTitle>
-                        <CardDescription>Use the transfer list to assign or unassign staff roles for the selected hackathon.</CardDescription>
+                        <CardDescription>
+                            Configure staff roles for the active hackathon:
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Hackathon Selection */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Select Hackathon</label>
-                            <Select onValueChange={setSelectedHackathon} value={selectedHackathon}>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Choose Hackathon" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {hackathons.map(h => (
-                                        <SelectItem key={h._id} value={h._id}>
-                                            {h.title} ({h.status.toUpperCase()})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        
+            
+
                         {/* Target Role Selection */}
-                        <div>
+                        <div className="md:col-span-1">
                             <label className="block text-sm font-medium text-gray-700 mb-1">Target Role</label>
                             <Select onValueChange={setTargetRole} value={targetRole}>
                                 <SelectTrigger className="w-full">
@@ -222,13 +236,27 @@ const RoleMapping = () => {
                                 </SelectContent>
                             </Select>
                         </div>
+                        
                         {/* Status Display */}
-                        <div className="flex flex-col justify-end">
-                            <p className="text-sm font-semibold text-gray-700">Target Mapping:</p>
+                        <div className="md:col-span-1 flex flex-col justify-end">
+                            <p className="text-sm font-semibold text-gray-700">Mapping Action:</p>
                             <p className="text-md font-bold text-indigo-600">
-                                {targetRole.toUpperCase()} for {selectedHackathonTitle || '...'}
+                                Assign to {targetRole.toUpperCase()}
                             </p>
                         </div>
+                    </CardContent>
+                </Card>
+
+                {/* Search Input Card */}
+                <Card className="shadow-lg">
+                    <CardContent className="p-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Search User by Name or Email</label>
+                        <Input 
+                            placeholder="Start typing to filter users in both lists..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full"
+                        />
                     </CardContent>
                 </Card>
                 
@@ -238,9 +266,9 @@ const RoleMapping = () => {
                     {/* Available Users List */}
                     <div className="space-y-3">
                         <h3 className="text-xl font-semibold flex items-center gap-2 text-green-700"><User className="w-5 h-5" /> Available Participants</h3>
-                        <p className="text-sm text-gray-500">Users available for assignment. (Role: Participant, Hackathon: None).</p>
+                        <p className="text-sm text-gray-500">Users available for assignment. (Role: Participant, Hackathon: None). **({filteredAvailableUsers.length} shown)**</p>
                         <UserListBox 
-                            users={availableUsers} 
+                            users={filteredAvailableUsers} 
                             selected={selectedAvailable} 
                             setSelected={setSelectedAvailable} 
                         />
@@ -268,9 +296,9 @@ const RoleMapping = () => {
                     {/* Assigned Users List */}
                     <div className="space-y-3">
                         <h3 className="text-xl font-semibold flex items-center gap-2 text-indigo-700"><UserCheck className="w-5 h-5" /> Assigned {targetRole}s</h3>
-                        <p className="text-sm text-gray-500">Users currently assigned as **{targetRole}** for this event.</p>
+                        <p className="text-sm text-gray-500">Users currently assigned as **{targetRole}** for the selected event. **({filteredAssignedUsers.length} shown)**</p>
                         <UserListBox 
-                            users={assignedUsers} 
+                            users={filteredAssignedUsers} 
                             selected={selectedAssigned} 
                             setSelected={setSelectedAssigned} 
                         />

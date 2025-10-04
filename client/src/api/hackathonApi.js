@@ -1,40 +1,97 @@
-import api from './axiosInstance'; 
+import api from './axiosInstance';
 
-const API_BASE_URL = '/api/hackathons';
+// The '/hackathons' part of the URL, which gets added to the base URL
+const API_URL = '/hackathons';
 
+// FOR PARTICIPANTS
 export const getAllHackathons = async () => {
-    return api.get(API_BASE_URL);
+  try {
+    const response = await api.get(API_URL);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch available hackathons:', error);
+    throw error;
+  }
 };
 
+// FOR ADMINS
+export const getAllHackathonsForAdmin = async () => {
+  try {
+    const response = await api.get(`${API_URL}/all`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch all hackathons for admin:', error);
+    throw error;
+  }
+};
+
+
+// --- Other API functions ---
 export const getHackathonById = async (id) => {
-    return api.get(`${API_BASE_URL}/${id}`);
+    try {
+        const response = await api.get(`${API_URL}/${id}`);
+        return response.data;
+    } catch (error) { throw error; }
+};
+export const createHackathon = async (hackathonData) => {
+    try {
+        const response = await api.post(API_URL, hackathonData);
+        return response.data;
+    } catch (error) { throw error; }
+};
+export const joinHackathon = async (hackathonId) => {
+    try {
+        const response = await api.post(`${API_URL}/join/${hackathonId}`);
+        return response.data;
+    } catch (error) { throw error; }
 };
 
 export const updateHackathon = async (id, hackathonData) => {
-    return api.put(`${API_BASE_URL}/${id}`, hackathonData);
-};
-
-export const createHackathon = async (hackathonData) => {
-    return api.post(API_BASE_URL, hackathonData);
+  try {
+    const response = await api.put(`${API_URL}/${id}`, hackathonData);
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to update hackathon with id ${id}:`, error);
+    throw error;
+  }
 };
 
 export const getHackathonWinners = async () => {
-    return api.get(`${API_BASE_URL}/winners`);
-};
-
-export const getDomainsAndCriteria = async () => {
-    return api.get(`${API_BASE_URL}/domains-and-questions`);
-};
-
-export const joinHackathon = async (hackathonId) => {
-    return api.post(`${API_BASE_URL}/join/${hackathonId}`);
+  try {
+    const response = await api.get(`${API_URL}/winners`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch hackathon winners:', error);
+    throw error;
+  }
 };
 
 export const leaveHackathon = async () => {
-    return api.post(`${API_BASE_URL}/leave`);
+  try {
+    const response = await api.post(`${API_URL}/leave`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to leave hackathon:', error);
+    throw error;
+  }
 };
 
-// ➡️ API call for winner submission
 export const declareWinners = async (hackathonId, winnerData) => {
-    return api.put(`${API_BASE_URL}/declare-winners/${hackathonId}`, winnerData);
+  try {
+    const response = await api.put(`${API_URL}/declare-winners/${hackathonId}`, winnerData);
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to declare winners for hackathon ${hackathonId}:`, error);
+    throw error;
+  }
+};
+
+export const updateHackathonQuestions = async (hackathonId, questionIds) => {
+  try {
+    const response = await api.put(`${API_URL}/${hackathonId}/questions`, { questionIds });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to update hackathon questions:', error);
+    throw error;
+  }
 };

@@ -1,15 +1,16 @@
 import Team from '../models/team.model.js';
+import User from '../models/user.model.js'; // ADDED: Import User model to update participants
 
 // --- Function to get all teams ---
 export const getTeams = async (req, res) => {
     try {
         const teams = await Team.find()
-            .populate('members', 'user_name') // Replaces member IDs with user documents (only the name)
-            .populate('q_id', 'q_title')      // Replaces question ID with question document (only the title)
-            .populate('coordinator', 'user_name'); // Replaces coordinator ID with user document (only the name)
+            .populate('members', 'user_name') 
+            .populate('q_id', 'q_title')      
+            .populate('coordinator', 'user_name');
         res.status(200).json(teams);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching teams', error });
+        res.status(500).json({ message: 'Error fetching teams', error: error.message });
     }
 };
 
@@ -18,27 +19,28 @@ export const createTeam = async (req, res) => {
     try {
         const { team_name, members, q_id, coordinator, user_github_url, max_members, hackathon_id } = req.body;
 
-        // 1. Check for duplicate team name within the same hackathon
+        if (!team_name || !members || !q_id || !coordinator || !hackathon_id) {
+            return res.status(400).json({ message: "Missing required fields for team creation." });
+        }
+
         const existingTeam = await Team.findOne({ team_name, hackathon_id });
         if (existingTeam) {
             return res.status(400).json({ message: "A team with this name already exists in this hackathon." });
         }
 
-        // 2. Create the new team instance
         const newTeam = new Team({
-            team_name,
-            members,
-            q_id,
-            coordinator,
-            user_github_url,
-            max_members,
-            hackathon_id
+            team_name, members, q_id, coordinator,
+            user_github_url, max_members, hackathon_id
         });
 
-        // 3. Save to the database
         await newTeam.save();
         
-        // 4. Populate the team data for response
+        // This is the critical step to make participants "unavailable"
+        await User.updateMany(
+            { _id: { $in: members } },
+            { $set: { current_hackathon: hackathon_id } }
+        );
+
         const populatedTeam = await Team.findById(newTeam._id)
             .populate('members', 'user_name user_email')
             .populate('q_id')
@@ -47,22 +49,23 @@ export const createTeam = async (req, res) => {
         res.status(201).json({ message: 'Team created successfully!', team: populatedTeam });
 
     } catch (error) {
-        console.error(error);
+        console.error("Error in createTeam:", error);
         res.status(500).json({ message: 'Server error while creating team', error: error.message });
     }
 };
+
+// --- Function to get team for a specific user ---
 export const getMyTeam = async (req, res) => {
     try {
-        const { userId } = req.params; // Get the user's ID from the URL parameter
+        const { userId } = req.params;
 
         if (!userId) {
             return res.status(400).json({ message: "User ID is required." });
         }
 
-        // Find the team where the 'members' array contains the participant's userId
         const team = await Team.findOne({ members: userId })
             .populate('members', 'user_name')
-            .populate('q_id') // Populate the entire question/project object
+            .populate('q_id') 
             .populate('coordinator', 'user_name');
 
         if (!team) {
@@ -71,7 +74,7 @@ export const getMyTeam = async (req, res) => {
 
         res.status(200).json(team);
     } catch (error) {
-        res.status(500).json({ message: 'Server error while fetching your team', error });
+        res.status(500).json({ message: 'Server error while fetching your team', error: error.message });
     }
 };
 
@@ -126,6 +129,12 @@ export const deleteTeam = async (req, res) => {
         if (!deletedTeam) {
             return res.status(404).json({ message: 'Team not found' });
         }
+        
+        // ADDED: When a team is deleted, free up the participants
+        await User.updateMany(
+            { _id: { $in: deletedTeam.members } },
+            { $set: { current_hackathon: null } }
+        );
 
         res.status(200).json({ message: 'Team deleted successfully' });
     } catch (error) {

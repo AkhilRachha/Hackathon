@@ -6,53 +6,52 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
-// Role-specific main pages
+// Admin pages
 import AdminLanding from './pages/admin/AdminLanding';
 import CreateHackathon from './pages/admin/CreateHackathon';
 import ViewHackathon from './pages/admin/ViewHackathon';
 import HackathonWinners from './pages/admin/HackathonWinners';
 import Titles from './pages/admin/Titles';
-import RoleMapping from './pages/admin/RoleMapping'; 
-// ➡️ NEW ADMIN PAGE IMPORT
-import HackathonManagement from './pages/admin/HackathonManagement'; 
+import RoleMapping from './pages/admin/RoleMapping';
+// --- ⬇️ IMPORT THE MISSING COMPONENT ⬇️ ---
+import HackathonManagement from './pages/admin/HackathonManagement';
+import QuestionMapping from './pages/admin/QuestionMapping';
 
-// Unified Dashboard for non-admins
-import ParticipantDashboard from './pages/participant/ParticipantDashboard';
+// Non-admin controllers
+import ParticipantPage from './pages/participant/ParticipantPage';
+import CoordinatorPage from './pages/coordinator/CoordinatorPage';
+import EvaluatorDashboard from './pages/evaluator/EvaluatorDashboard';
 
 function App() {
   return (
     <Router>
       <div className="min-h-screen bg-background text-foreground">
         <Routes>
-          {/* ==================================================================== */}
-          {/* PUBLIC ROUTES                                                        */}
-          {/* ==================================================================== */}
+          {/* Public */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* ==================================================================== */}
-          {/* PROTECTED ROUTES                                                     */}
-          {/* ==================================================================== */}
-          
-          {/* --- Admin Routes --- */}
+          {/* Admin */}
           <Route path="/admin" element={<AdminLanding />} />
           <Route path="/admin/create-hackathon" element={<CreateHackathon />} />
           <Route path="/admin/view-hackathon" element={<ViewHackathon />} />
           <Route path="/admin/hackathon-winners" element={<HackathonWinners />} />
           <Route path="/admin/titles" element={<Titles />} />
-          <Route path="/admin/role-mapping" element={<RoleMapping />} /> 
-          
-          {/* ➡️ NEW ROUTE: Dedicated Management Page */}
-          <Route path="/admin/manage-hackathon/:hackathonId" element={<HackathonManagement />} />
+          <Route path="/admin/role-mapping" element={<RoleMapping />} />
+          <Route path="/admin/hackathon/:hackathonId/questions" element={<QuestionMapping />} />
+          {/* --- ⬇️ ADD THE MISSING ROUTE HERE ⬇️ --- */}
+          <Route
+            path="/admin/manage-hackathon/:hackathonId"
+            element={<HackathonManagement />}
+          />
 
-          {/* --- Unified Non-Admin Routes --- */}
-          <Route path="/coordinator" element={<ParticipantDashboard />} />
-          <Route path="/participant" element={<ParticipantDashboard />} />
-          <Route path="/evaluator-dashboard" element={<ParticipantDashboard />} />
-          
+          {/* Non-admin role pages */}
+          <Route path="/participant" element={<ParticipantPage />} />
+          <Route path="/coordinator" element={<CoordinatorPage />} />
+          <Route path="/evaluator-dashboard" element={<EvaluatorDashboard />} />
         </Routes>
-        
+
         <Toaster />
       </div>
     </Router>

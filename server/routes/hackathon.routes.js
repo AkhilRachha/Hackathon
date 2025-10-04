@@ -1,49 +1,35 @@
-// routes/hackathon.routes.js
 import express from 'express';
 import { verifyUser } from '../middlewares/auth.middleware.js'; 
 import { 
     createHackathon, 
     getHackathons, 
+    getAllHackathonsForAdmin,
     getHackathonWinners, 
     checkActiveOrUpcomingHackathon,
     getHackathonById, 
     updateHackathon,
     joinHackathon,
     leaveHackathon,
-    declareWinners
+    declareWinners,
+    updateHackathonQuestions
 } from '../controllers/hackathon.controller.js';
-import { getDomainsAndQuestions } from '../controllers/question.controller.js'; 
+// REMOVED: No longer importing from question.controller.js
 
 const router = express.Router();
 
-// --- Hackathon Routes (Mounted under /api/hackathons) ---
-
-// 1. Checks if an event is active (Used by frontend)
+router.get('/all', verifyUser, getAllHackathonsForAdmin); 
+router.get('/', getHackathons); 
+router.post('/', verifyUser, createHackathon); 
 router.get('/active-or-upcoming', checkActiveOrUpcomingHackathon);
-
-// ➡️ 2. CRITICAL FIX: Handles GET /api/hackathons (list all) and POST /api/hackathons (create new)
-router.route('/')
-    .get(getHackathons) // ✅ Resolves to GET /api/hackathons
-    .post(createHackathon); 
-
-// 3. Dynamic route for fetching the detailed management view, editing, and Admin management
-router.route('/:id')
-    .get(getHackathonById) 
-    .put(updateHackathon); 
-    
-// 4. Protected Winner Route (Admin only)
-router.put('/declare-winners/:id', verifyUser, declareWinners);
-
-// 5. Domains and Criteria (for Titles.jsx)
-router.get('/domains-and-questions', getDomainsAndQuestions); 
-
-// 6. Winners list
 router.get('/winners', getHackathonWinners);
 
-// 7. Protected Join Route (Participant/Staff flow)
-router.post('/join/:hackathonId', verifyUser, joinHackathon);
+// REMOVED: The '/domains-and-questions' route has been deleted from this file.
 
-// 8. Protected Leave Route (Participant/Staff flow)
+router.get('/:id', getHackathonById); 
+router.put('/:id', verifyUser, updateHackathon); 
+router.put('/declare-winners/:id', verifyUser, declareWinners);
+router.post('/join/:hackathonId', verifyUser, joinHackathon);
 router.post('/leave', verifyUser, leaveHackathon);
+router.put('/:id/questions', verifyUser, updateHackathonQuestions);
 
 export default router;

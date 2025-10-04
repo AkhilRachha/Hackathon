@@ -8,89 +8,94 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { LogIn, ArrowLeft } from 'lucide-react';
-import { toast } from '@/hooks/use-toast'; 
+import { useToast } from '@/hooks/use-toast';
+import api from '@/api/axiosInstance'; // --- ⬇️  FIX #1: Import the configured api instance ---
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(1, 'Password cannot be empty'), 
+  password: z.string().min(1, 'Password cannot be empty'),
 });
 
 const Login = () => {
   const navigate = useNavigate();
-  
+  const { toast } = useToast();
+
   const form = useForm({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    }
+    defaultValues: { email: '', password: '' },
   });
 
+  // --- ⬇️  FIX #2: Rewritten onSubmit function ---
   const onSubmit = async (data) => {
     try {
-      // NOTE: Using direct fetch for simplicity, ensure this matches your setup
-      const response = await fetch('http://localhost:9000/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_email: data.email, user_password: data.password }),
+      // Use the configured 'api' instance, which includes the base URL
+      const response = await api.post('/login', {
+        user_email: data.email,
+        user_password: data.password,
       });
 
-      const result = await response.json();
+      // With axios, the response data is directly in `response.data`
+      const result = response.data;
 
-      if (response.ok) {
-        localStorage.clear();
-        
-        localStorage.setItem('token', result.token);
-        localStorage.setItem('userId', result.user._id); 
-        localStorage.setItem('userName', result.user.user_name); 
-        localStorage.setItem('userRole', result.user.role_name);
+      // If the request succeeds, axios will not throw an error.
+      localStorage.clear();
+      localStorage.setItem('authToken', result.token);
+      localStorage.setItem('userId', result.user._id);
+      localStorage.setItem('userName', result.user.user_name);
+      localStorage.setItem('userRole', result.user.role_name);
 
-        // ➡️ NEW: Store the current_hackathon ID (will be null if user is free)
-        if (result.user.current_hackathon) {
-            localStorage.setItem('currentHackathonId', result.user.current_hackathon);
-        } else {
-            localStorage.removeItem('currentHackathonId');
-        }
-
-        const roleRoutes = {
-          'admin': '/admin',
-          // ➡️ FIX: Redirect all non-admins to the single selection/dashboard page
-          'coordinator': '/participant', 
-          'participant': '/participant',
-          'evaluator': '/participant',
-        };
-
-        const userRoleName = result.user.role_name; 
-        
-        const redirectPath = roleRoutes[userRoleName] || '/';
-
-        toast({ title: "Success", description: "Login successful!" });
-        navigate(redirectPath, { replace: true });
-      } else {
-        toast({ title: "Login Failed", description: result.message || 'Please check your credentials.' });
+      if (result.user.current_hackathon) {
+        localStorage.setItem('currentHackathonId', result.user.current_hackathon);
       }
+
+      toast({ title: 'Success', description: 'Login successful!' });
+
+      // Role-based navigation
+      const role = result.user.role_name;
+      if (role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else if (role === 'participant') {
+        navigate('/participant', { replace: true });
+      } else if (role === 'coordinator') {
+        navigate('/coordinator', { replace: true });
+      } else if (role === 'evaluator') {
+        navigate('/evaluator-dashboard', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
+
     } catch (error) {
-      console.error('An unexpected error occurred:', error);
-      toast({ title: "Error", description: 'A network error occurred. Please try again later.' });
+      // Axios automatically throws an error for 4xx/5xx responses.
+      // This single catch block will handle all errors (wrong password, server down, etc.).
+      console.error('Login failed:', error);
+      toast({
+        title: 'Login Failed',
+        description: error.response?.data?.message || 'Please check your credentials.',
+        variant: 'destructive',
+      });
     }
   };
+  // --- ⬆️ END OF FIX ⬆️ ---
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.6, ease: "easeOut" }
-    }
+      transition: { duration: 0.6, ease: 'easeOut' },
+    },
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute inset-0">
         <div className="absolute top-1/4 right-1/4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div
+          className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: '1s' }}
+        />
       </div>
-      
+
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -100,7 +105,7 @@ const Login = () => {
         <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.2 }}>
           <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-xl">
             <CardHeader className="space-y-1 text-center pb-8">
-              <motion.div 
+              <motion.div
                 className="flex justify-center mb-6"
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 transition={{ duration: 0.2 }}
@@ -125,7 +130,9 @@ const Login = () => {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-semibold text-gray-700">Email Address</FormLabel>
+                        <FormLabel className="text-sm font-semibold text-gray-700">
+                          Email Address
+                        </FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Enter your email"
@@ -138,13 +145,15 @@ const Login = () => {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-semibold text-gray-700">Password</FormLabel>
+                        <FormLabel className="text-sm font-semibold text-gray-700">
+                          Password
+                        </FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Enter your password"
@@ -159,8 +168,8 @@ const Login = () => {
                   />
 
                   <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/25 transition-all duration-200"
                       size="lg"
                     >

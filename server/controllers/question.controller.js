@@ -38,7 +38,7 @@ export const getAllQuestions = async (req, res) => {
   }
 };
 
-// --- Get Questions Grouped by Domain (for the frontend management page) ---
+// --- Get Questions Grouped by Domain ---
 export const getDomainsAndQuestions = async (req, res) => {
   try {
     const questions = await Question.find({});
