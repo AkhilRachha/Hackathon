@@ -1,0 +1,30 @@
+{
+  "name": "hackathon-portal",
+  "version": "1.0.0",
+  "description": "A comprehensive hackathon management platform",
+  "scripts": {
+    "server": "npm --prefix backend start",
+    "client": "npm --prefix frontend run dev",
+    "dev": "concurrently -k --raw \"npm run server\" \"npm run client\""
+  },
+  "keywords": [
+    "hackathon",
+    "management",
+    "react",
+    "vite",
+    "tailwindcss"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "http-status-codes": "^2.3.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
